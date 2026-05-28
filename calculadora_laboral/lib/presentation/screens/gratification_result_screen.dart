@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/payroll_providers.dart';
+import '../providers/employee_data_provider.dart';
 import '../widgets/results/section_card.dart';
 import '../widgets/results/result_row_widget.dart';
 import '../../core/utils/currency_formatter.dart';
@@ -15,8 +16,7 @@ class GratificationResultScreen extends ConsumerWidget {
     final result = ref.watch(gratificationResultProvider);
     final textTheme = Theme.of(context).textTheme;
 
-    // Desglose oculto por solicitud del usuario
-    const bool _showBreakdown = false;
+    final isTruncated = ref.watch(gratificationDataProvider).isCurrentlyWorking == false;
 
     return Scaffold(
       appBar: AppBar(
@@ -55,14 +55,36 @@ class GratificationResultScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'GRATIFICACIÓN ${result.semester.toUpperCase()}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            letterSpacing: 2.0,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white70,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'GRATIFICACIÓN ${result.semester.toUpperCase()}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                letterSpacing: 2.0,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            if (isTruncated) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.white24,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'TRUNCA',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                         const SizedBox(height: 10),
                         Text(
@@ -122,44 +144,6 @@ class GratificationResultScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-
-            if (_showBreakdown) ...[
-              SectionCard(
-                title: 'DESGLOSE DE GRATIFICACIÓN',
-                icon: Icons.receipt_long_rounded,
-                children: [
-                  ResultRow(
-                    label: 'Remuneración computable',
-                    subtitle: 'Sueldo bruto + Asig. familiar',
-                    amount: result.computableSalary,
-                    type: ResultRowType.neutral,
-                  ),
-                  ResultRow(
-                    label: 'Gratificación base',
-                    subtitle: '(Rem. comp. / 6) × ${result.completedMonths} meses',
-                    amount: result.baseGratification,
-                    type: ResultRowType.income,
-                  ),
-                  ResultRow(
-                    label: result.healthInsurance == HealthInsurance.eps
-                        ? 'Bonif. extraord. Ley 29351 (EPS 6.75%)'
-                        : result.healthInsurance == HealthInsurance.sis
-                            ? 'Bonif. extraord. (0% SIS)'
-                            : 'Bonif. extraord. Ley 29351 (EsSalud 9%)',
-                    subtitle: 'Pagada por el empleador al trabajador',
-                    amount: result.extraordinaryBonus,
-                    type: ResultRowType.income,
-                  ),
-                  ResultRow(
-                    label: 'Total a recibir',
-                    amount: result.totalGratification,
-                    type: ResultRowType.total,
-                    isLast: true,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-            ],
 
             // ── Botón Volver a calcular ─────────────────────────────
             SizedBox(

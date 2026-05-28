@@ -203,12 +203,14 @@ enum AfpCommissionType {
 enum CompanyRegime {
   general,
   small,
-  micro;
+  micro,
+  intern;
 
   String get displayName => switch (this) {
         CompanyRegime.general => 'Régimen General',
         CompanyRegime.small => 'Pequeña Empresa',
         CompanyRegime.micro => 'Microempresa',
+        CompanyRegime.intern => 'Practicante',
       };
 }
 
@@ -216,12 +218,14 @@ enum CompanyRegime {
 enum HealthInsurance {
   sis,
   essalud,
-  eps;
+  eps,
+  both;
 
   String get displayName => switch (this) {
         HealthInsurance.sis => 'SIS Microempresa',
         HealthInsurance.essalud => 'EsSalud Regular',
         HealthInsurance.eps => 'EPS',
+        HealthInsurance.both => 'Ambos',
       };
 }
 

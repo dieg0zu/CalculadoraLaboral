@@ -14,9 +14,6 @@ class VacationLiquidationResultScreen extends ConsumerWidget {
     final result = ref.watch(liquidationResultProvider);
     final textTheme = Theme.of(context).textTheme;
 
-    // Desglose oculto por solicitud del usuario
-    const bool _showBreakdown = false;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Resultado de Liquidación'),
@@ -122,45 +119,7 @@ class VacationLiquidationResultScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            if (_showBreakdown) ...[
-              SectionCard(
-                title: 'DESGLOSE DE BENEFICIOS TRUNCOS',
-                icon: Icons.pie_chart_outline_rounded,
-                children: [
-                  ResultRow(
-                    label: 'Gratificación Trunca (+Bonif. Extra)',
-                    amount: result.truncatedGratification + result.truncatedExtraBonus,
-                    type: ResultRowType.income,
-                  ),
-                  ResultRow(
-                    label: 'CTS Trunca',
-                    amount: result.truncatedCts,
-                    type: ResultRowType.income,
-                  ),
-                  ResultRow(
-                    label: 'Vacaciones Truncas',
-                    amount: result.truncatedVacations,
-                    type: ResultRowType.income,
-                  ),
-                  ResultRow(
-                    label: 'Total Liquidación',
-                    amount: result.totalLiquidation,
-                    type: ResultRowType.total,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              /*
-              SectionCard(
-                title: 'DEDUCCIONES (SOLO VACACIONES)',
-                icon: Icons.money_off_rounded,
-                children: [
-                  // La entidad LiquidationResult actual no incluye el detalle de deducciones.
-                ],
-              ),
-              */
-              const SizedBox(height: 32),
-            ],
+
 
             // ── Botón Volver a calcular ─────────────────────────────
             SizedBox(

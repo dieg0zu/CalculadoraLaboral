@@ -45,13 +45,28 @@ class EmployeeData {
   final int workedDays;
 
   /// Tipo de seguro de salud seleccionado
-  final HealthInsurance healthInsurance;
+  final HealthInsurance? healthInsurance;
 
   /// Costo del plan EPS comercial (solo si aplica EPS)
   final double epsCost;
 
   /// ¿Las horas extras/bonos cumplen la regla de regularidad (>= 3 veces en semestre)?
-  final bool variablesMeetRegularity;
+  final bool variablesMeetRegularity; // Deprecated, will replace with separate flags
+
+  /// ¿Los bonos cumplen la regla de regularidad?
+  final bool? bonusesMeetRegularity;
+
+  /// ¿Las horas extras cumplen la regla de regularidad?
+  final bool? overtimeMeetRegularity;
+
+  /// ¿Sigue trabajando actualmente?
+  final bool? isCurrentlyWorking;
+
+  /// ¿Recibió gratificación en el último periodo? (Para CTS)
+  final bool? hasLastGratification;
+
+  /// Monto de la última gratificación recibida (Para CTS)
+  final double lastGratificationAmount;
 
   /// Mes de cálculo (1–12) para determinar semestre de gratificación
   final int currentMonth;
@@ -68,12 +83,17 @@ class EmployeeData {
     this.overtimeHours35 = 0,
     this.workedMonths = 0,
     this.workedDays = 0,
-    this.healthInsurance = HealthInsurance.essalud,
+    this.healthInsurance,
     this.epsCost = 0.0,
     this.variablesMeetRegularity = false,
+    this.bonusesMeetRegularity,
+    this.overtimeMeetRegularity,
+    this.isCurrentlyWorking,
     this.currentMonth = 6,
     this.semesterTotalBonuses = 0.0,
     this.semesterTotalOvertime = 0.0,
+    this.hasLastGratification,
+    this.lastGratificationAmount = 0.0,
   });
 
   EmployeeData copyWith({
@@ -91,9 +111,14 @@ class EmployeeData {
     HealthInsurance? healthInsurance,
     double? epsCost,
     bool? variablesMeetRegularity,
+    bool? bonusesMeetRegularity,
+    bool? overtimeMeetRegularity,
+    bool? isCurrentlyWorking,
     int? currentMonth,
     double? semesterTotalBonuses,
     double? semesterTotalOvertime,
+    bool? hasLastGratification,
+    double? lastGratificationAmount,
     bool clearPensionSystem = false,
     bool clearAfpType = false,
     bool clearCommissionType = false,
@@ -113,9 +138,14 @@ class EmployeeData {
       healthInsurance: healthInsurance ?? this.healthInsurance,
       epsCost: epsCost ?? this.epsCost,
       variablesMeetRegularity: variablesMeetRegularity ?? this.variablesMeetRegularity,
+      bonusesMeetRegularity: bonusesMeetRegularity ?? this.bonusesMeetRegularity,
+      overtimeMeetRegularity: overtimeMeetRegularity ?? this.overtimeMeetRegularity,
+      isCurrentlyWorking: isCurrentlyWorking ?? this.isCurrentlyWorking,
       currentMonth: currentMonth ?? this.currentMonth,
       semesterTotalBonuses: semesterTotalBonuses ?? this.semesterTotalBonuses,
       semesterTotalOvertime: semesterTotalOvertime ?? this.semesterTotalOvertime,
+      hasLastGratification: hasLastGratification ?? this.hasLastGratification,
+      lastGratificationAmount: lastGratificationAmount ?? this.lastGratificationAmount,
     );
   }
 
@@ -137,12 +167,17 @@ class EmployeeData {
           healthInsurance == other.healthInsurance &&
           epsCost == other.epsCost &&
           variablesMeetRegularity == other.variablesMeetRegularity &&
+          bonusesMeetRegularity == other.bonusesMeetRegularity &&
+          overtimeMeetRegularity == other.overtimeMeetRegularity &&
+          isCurrentlyWorking == other.isCurrentlyWorking &&
           currentMonth == other.currentMonth &&
           semesterTotalBonuses == other.semesterTotalBonuses &&
-          semesterTotalOvertime == other.semesterTotalOvertime;
+          semesterTotalOvertime == other.semesterTotalOvertime &&
+          hasLastGratification == other.hasLastGratification &&
+          lastGratificationAmount == other.lastGratificationAmount;
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
         grossSalary,
         hasFamilyAllowance,
         regime,
@@ -157,8 +192,13 @@ class EmployeeData {
         healthInsurance,
         epsCost,
         variablesMeetRegularity,
+        bonusesMeetRegularity,
+        overtimeMeetRegularity,
+        isCurrentlyWorking,
         currentMonth,
         semesterTotalBonuses,
         semesterTotalOvertime,
-      );
+        hasLastGratification,
+        lastGratificationAmount,
+      ]);
 }

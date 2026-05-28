@@ -189,7 +189,7 @@ class NetSalaryResultScreen extends ConsumerWidget {
               icon: Icons.business_center_rounded,
               children: [
                 ResultRow(
-                  label: data.healthInsurance.displayName,
+                  label: (data.healthInsurance ?? HealthInsurance.essalud).displayName,
                   subtitle: data.healthInsurance == HealthInsurance.sis 
                       ? 'Costo fijo mensual' 
                       : 'Aporte obligatorio (9%)',

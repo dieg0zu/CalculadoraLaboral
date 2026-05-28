@@ -44,7 +44,7 @@ final class CalculateVacationUseCase {
     // Multiplicador de régimen para vacaciones
     // General: 1.0 (30 días por año)
     // Small/Micro: 0.5 (15 días por año)
-    final regimeMultiplier = (data.regime == CompanyRegime.small || data.regime == CompanyRegime.micro) ? 0.5 : 1.0;
+    final regimeMultiplier = (data.regime == CompanyRegime.small || data.regime == CompanyRegime.micro || data.regime == CompanyRegime.intern) ? 0.5 : 1.0;
 
     // Vacaciones proporcionales usando 360 como divisor absoluto
     final proportionalVacation = totalDaysWorked > 0

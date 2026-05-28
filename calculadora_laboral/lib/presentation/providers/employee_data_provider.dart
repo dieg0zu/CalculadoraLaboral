@@ -20,7 +20,7 @@ class EmployeeDataNotifier extends StateNotifier<EmployeeData> {
 
   void updateRegime(CompanyRegime regime) {
     // Si cambia el régimen y no es microempresa, pero el seguro es SIS, lo reseteamos a EsSalud
-    HealthInsurance currentInsurance = state.healthInsurance;
+    HealthInsurance? currentInsurance = state.healthInsurance;
     if (regime != CompanyRegime.micro && currentInsurance == HealthInsurance.sis) {
       currentInsurance = HealthInsurance.essalud;
     }
@@ -71,20 +71,40 @@ class EmployeeDataNotifier extends StateNotifier<EmployeeData> {
     state = state.copyWith(epsCost: cost.clamp(0, 999999));
   }
 
-  void updateVariablesMeetRegularity(bool value) {
-    state = state.copyWith(variablesMeetRegularity: value);
+  void updateVariablesMeetRegularity(bool meet) {
+    state = state.copyWith(variablesMeetRegularity: meet);
+  }
+
+  void updateBonusesMeetRegularity(bool meet) {
+    state = state.copyWith(bonusesMeetRegularity: meet);
+  }
+
+  void updateOvertimeMeetRegularity(bool meet) {
+    state = state.copyWith(overtimeMeetRegularity: meet);
+  }
+
+  void updateIsCurrentlyWorking(bool working) {
+    state = state.copyWith(isCurrentlyWorking: working);
   }
 
   void updateCurrentMonth(int month) {
     state = state.copyWith(currentMonth: month.clamp(1, 12));
   }
 
-  void updateSemesterTotalBonuses(double total) {
-    state = state.copyWith(semesterTotalBonuses: total.clamp(0, 999999));
+  void updateSemesterTotalBonuses(double amount) {
+    state = state.copyWith(semesterTotalBonuses: amount.clamp(0, 999999));
   }
 
-  void updateSemesterTotalOvertime(double total) {
-    state = state.copyWith(semesterTotalOvertime: total.clamp(0, 999999));
+  void updateSemesterTotalOvertime(double amount) {
+    state = state.copyWith(semesterTotalOvertime: amount.clamp(0, 999999));
+  }
+
+  void updateHasLastGratification(bool hasIt) {
+    state = state.copyWith(hasLastGratification: hasIt);
+  }
+
+  void updateLastGratificationAmount(double amount) {
+    state = state.copyWith(lastGratificationAmount: amount.clamp(0, 999999));
   }
 
   /// Resetea todos los campos a sus valores por defecto

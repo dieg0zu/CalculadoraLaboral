@@ -14,8 +14,7 @@ class CtsResultScreen extends ConsumerWidget {
     final result = ref.watch(ctsResultProvider);
     final textTheme = Theme.of(context).textTheme;
 
-    // Desglose oculto por solicitud del usuario
-    const bool _showBreakdown = false;
+
 
     return Scaffold(
       appBar: AppBar(
@@ -90,35 +89,29 @@ class CtsResultScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-
-            if (_showBreakdown) ...[
-              SectionCard(
-                title: 'DESGLOSE DEL CÁLCULO',
-                icon: Icons.calculate_outlined,
+            // ── Aviso Importante ─────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFF87171)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ResultRow(
-                    label: 'Remuneración computable',
-                    subtitle: 'Incluye 1/6 de gratificación',
-                    amount: result.computableSalary,
-                    type: ResultRowType.neutral,
-                  ),
-                  ResultRow(
-                    label: 'Tiempo laborado computable',
-                    subtitle: '${result.completedMonths} meses y ${result.additionalDays} días',
-                    amount: 0, // No es un monto, lo usamos para el subtítulo
-                    type: ResultRowType.neutral,
-                  ),
-                  ResultRow(
-                    label: 'Total CTS a depositar',
-                    amount: result.totalCts,
-                    type: ResultRowType.total,
-                    isLast: true,
+                  const Icon(Icons.info_outline_rounded, color: Color(0xFFDC2626)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Aviso: Este cálculo asume que aún no se le ha depositado la CTS correspondiente a este periodo. Si ya se le depositó y cesa sus labores poco después, este monto NO es adicional; solo le correspondería el cálculo por los días extra trabajados después de su último depósito.',
+                      style: const TextStyle(color: Color(0xFF991B1B), fontSize: 13, height: 1.4),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
-            ],
+            ),
+            const SizedBox(height: 24),
 
             // ── Botón Volver a calcular ─────────────────────────────
             SizedBox(

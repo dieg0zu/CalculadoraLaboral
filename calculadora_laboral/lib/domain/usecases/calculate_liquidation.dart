@@ -47,7 +47,7 @@ final class CalculateLiquidationUseCase {
     final truncatedVacationsNet = truncatedVacationsGross - vacationsRetention;
 
     // Gratificación trunca
-    final gratResult = _gratification(data, isTruncated: true);
+    final gratResult = _gratification(data.copyWith(isCurrentlyWorking: false));
     final truncatedGratification = gratResult.baseGratification;
     final truncatedExtraBonus = gratResult.extraordinaryBonus;
 

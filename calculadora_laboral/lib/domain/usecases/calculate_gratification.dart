@@ -21,20 +21,21 @@ final class CalculateGratificationUseCase {
   }) : _familyAllowance =
             familyAllowance ?? const CalculateFamilyAllowanceUseCase();
 
-  /// [isTruncated] Si es true, representa gratificación trunca (descarta días).
-  GratificationResult call(EmployeeData data, {bool isTruncated = false}) {
+  GratificationResult call(EmployeeData data) {
     final familyAllowance = _familyAllowance(data);
 
-    // Valor de ingresos variables regulares (horas extra, comisiones)
-    // Según MTPE, solo se computan si se percibieron al menos 3 veces en el semestre
     double regularVariablesAvg = 0;
-    if (data.variablesMeetRegularity) {
+    if (data.overtimeMeetRegularity == true) {
       if (data.overtimeHours25 > 0 || data.overtimeHours35 > 0) {
         final hourlyRate = data.grossSalary / 30 / 8;
-        regularVariablesAvg += (data.overtimeHours25 * hourlyRate * 1.25);
-        regularVariablesAvg += (data.overtimeHours35 * hourlyRate * 1.35);
+        final overtimeTotal = (data.overtimeHours25 * hourlyRate * 1.25) +
+                              (data.overtimeHours35 * hourlyRate * 1.35);
+        regularVariablesAvg += overtimeTotal / 6;
       }
-      regularVariablesAvg += data.bonuses;
+    }
+    
+    if (data.bonusesMeetRegularity == true) {
+      regularVariablesAvg += data.bonuses / 6;
     }
 
     // Remuneración computable: sueldo bruto + asignación familiar + promedio variables regulares
@@ -45,26 +46,26 @@ final class CalculateGratificationUseCase {
       CompanyRegime.general => 1.0,
       CompanyRegime.small => 0.5,
       CompanyRegime.micro => 0.0,
+      CompanyRegime.intern => 0.0,
       null => 1.0,
     };
 
     // Semestre de referencia
     final semester = data.currentMonth <= 6 ? 'Julio' : 'Diciembre';
 
-    // Meses completados en el semestre (máximo 6)
-    final completedMonths = data.workedMonths.clamp(0, LegalParameters.kGratMonthsPerSemester);
+    // Meses completados
+    final completedMonths = data.workedMonths;
 
-    // Días completados (descartados si es trunca)
-    final completedDays = isTruncated ? 0 : data.workedDays.clamp(0, 30);
+    // Días completados (Siempre 0 para gratificación, ya que usa meses completos)
+    final completedDays = 0;
 
     // Gratificación base proporcional por régimen
     final gratiForMonths = (computableSalary / LegalParameters.kGratMonthsPerSemester) * completedMonths * regimeMultiplier;
-    final gratiForDays = (computableSalary / (LegalParameters.kGratMonthsPerSemester * 30)) * completedDays * regimeMultiplier;
+    final gratiForDays = 0.0;
     
-    // Si no se especifica tiempo, se asume semestre completo
-    final baseGratification = (data.workedMonths > 0 || data.workedDays > 0) 
-        ? (gratiForMonths + gratiForDays)
-        : (computableSalary * regimeMultiplier);
+    final baseGratification = completedMonths > 0 
+        ? gratiForMonths 
+        : 0.0;
 
     // Bonificación extraordinaria Ley 29351
     final double healthBonusRate;
@@ -72,8 +73,10 @@ final class CalculateGratificationUseCase {
       case HealthInsurance.sis:
         healthBonusRate = 0.0;
       case HealthInsurance.eps:
+      case HealthInsurance.both:
         healthBonusRate = LegalParameters.kGratBonifEpsRate;
       case HealthInsurance.essalud:
+      case null:
         healthBonusRate = LegalParameters.kGratBonifEsSaludRate;
     }
 
@@ -90,7 +93,7 @@ final class CalculateGratificationUseCase {
       gratiForDays: gratiForDays,
       extraordinaryBonus: extraordinaryBonus,
       totalGratification: totalGratification,
-      healthInsurance: data.healthInsurance,
+      healthInsurance: data.healthInsurance ?? HealthInsurance.essalud,
     );
   }
 }

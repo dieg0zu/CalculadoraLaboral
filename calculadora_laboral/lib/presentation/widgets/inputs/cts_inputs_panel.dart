@@ -14,26 +14,54 @@ class CtsInputsPanel extends ConsumerStatefulWidget {
 class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
   DateTime? _startDate;
   DateTime? _endDate;
-  bool _hasBonuses = false;
-  bool _hasOvertime = false;
 
   void _calculateTimeFromDates() {
-    if (_startDate == null || _endDate == null) return;
+    if (_startDate == null) return;
     
-    // Si la fecha final es antes que la inicial, la reiniciamos
-    if (_endDate!.isBefore(_startDate!)) {
-      ref.read(ctsDataProvider.notifier).updateWorkedMonths(0);
-      ref.read(ctsDataProvider.notifier).updateWorkedDays(0);
+    final data = ref.read(ctsDataProvider);
+    final notifier = ref.read(ctsDataProvider.notifier);
+    
+    final isCurrentlyWorking = data.isCurrentlyWorking ?? true;
+    final DateTime referenceDate = isCurrentlyWorking ? DateTime.now() : (_endDate ?? DateTime.now());
+
+    DateTime startOfSemester;
+    DateTime endOfSemester;
+
+    if (referenceDate.month >= 6 && referenceDate.month <= 11) {
+      // Semestre: 1 de Mayo al 31 de Octubre (Se deposita en Noviembre, válido de Junio a Noviembre)
+      startOfSemester = DateTime(referenceDate.year, 5, 1);
+      endOfSemester = DateTime(referenceDate.year, 10, 31);
+    } else {
+      // Semestre: 1 de Noviembre al 30 de Abril (Se deposita en Mayo, válido de Diciembre a Mayo)
+      if (referenceDate.month == 12) {
+        startOfSemester = DateTime(referenceDate.year, 11, 1);
+        endOfSemester = DateTime(referenceDate.year + 1, 4, 30);
+      } else {
+        startOfSemester = DateTime(referenceDate.year - 1, 11, 1);
+        endOfSemester = DateTime(referenceDate.year, 4, 30);
+      }
+    }
+
+    final effectiveEnd = isCurrentlyWorking ? endOfSemester : (_endDate ?? DateTime.now());
+    // Si sigue laborando, se calcula solo lo del semestre actual. 
+    // Si ya cesó, se calcula TODO el tiempo que estuvo trabajando (ya que es para la liquidación).
+    final effectiveStart = isCurrentlyWorking && _startDate!.isBefore(startOfSemester) 
+        ? startOfSemester 
+        : _startDate!;
+
+    if (effectiveEnd.isBefore(effectiveStart)) {
+      notifier.updateWorkedMonths(0);
+      notifier.updateWorkedDays(0);
       return;
     }
 
     int months = 0;
     int days = 0;
 
-    // Lógica comercial peruana (meses de 30 días)
-    DateTime current = _startDate!;
-    while (current.year < _endDate!.year || 
-          (current.year == _endDate!.year && current.month < _endDate!.month)) {
+    DateTime current = effectiveStart;
+    
+    while (current.year < effectiveEnd.year || 
+          (current.year == effectiveEnd.year && current.month < effectiveEnd.month)) {
       if (current.day == 1) {
         months++;
         current = DateTime(current.year, current.month + 1, 1);
@@ -43,33 +71,28 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
       }
     }
     
-    if (current.month == _endDate!.month && current.year == _endDate!.year) {
-      if (current.day == 1) {
-        if (_endDate!.day == 30 || _endDate!.day == 31 || (_endDate!.month == 2 && _endDate!.day >= 28)) {
-          months++;
-        } else {
-          days += _endDate!.day;
-        }
+    if (current.month == effectiveEnd.month && current.year == effectiveEnd.year) {
+      if (current.day == 1 && effectiveEnd.day >= 30) {
+        months++;
+      } else if (current.day == 1) {
+        days += effectiveEnd.day;
       } else {
-        int maxDays = 30; // comercial
-        int diff = _endDate!.day - current.day + 1;
-        days += diff;
+        days += effectiveEnd.day - current.day + 1;
       }
     }
 
     months += days ~/ 30;
     days = days % 30;
-
     months = months.clamp(0, 6);
 
-    ref.read(ctsDataProvider.notifier).updateWorkedMonths(months);
-    ref.read(ctsDataProvider.notifier).updateWorkedDays(days);
+    notifier.updateWorkedMonths(months);
+    notifier.updateWorkedDays(days);
   }
 
   Future<void> _selectStartDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _startDate ?? DateTime(2026, 1, 1),
+      initialDate: _startDate ?? DateTime(2026, 5, 1),
       firstDate: DateTime(2000),
       lastDate: DateTime(2030),
       helpText: 'Seleccionar Fecha de Inicio',
@@ -85,7 +108,7 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
   Future<void> _selectEndDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _endDate ?? _startDate ?? DateTime(2026, 6, 30),
+      initialDate: _endDate ?? DateTime(2026, 10, 31),
       firstDate: _startDate ?? DateTime(2000),
       lastDate: DateTime(2030),
       helpText: 'Seleccionar Fecha de Fin',
@@ -103,204 +126,426 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
     final data = ref.watch(ctsDataProvider);
     final notifier = ref.read(ctsDataProvider.notifier);
 
+    const primaryBlue = Color(0xFF005CEE);
+    const lightBlueBg = Color(0xFFF2F6FE);
+    const borderColor = Color(0xFFC7D9FA);
+    const textDark = Color(0xFF1E293B);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 1. RÉGIMEN
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: DropdownButtonFormField<CompanyRegime>(
-              value: data.regime,
-              decoration: InputDecoration(
-                labelText: 'Régimen de la Empresa',
-                prefixIcon: const Icon(Icons.business_rounded, color: Color(0xFF007AFF)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. RÉGIMEN (Dropdown)
+            const Text('Régimen de la Empresa', style: TextStyle(fontSize: 14, color: textDark)),
+            const SizedBox(height: 8),
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              items: CompanyRegime.values.map((regime) {
-                return DropdownMenuItem(
-                  value: regime,
-                  child: Text(regime.displayName),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) notifier.updateRegime(val);
-              },
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<CompanyRegime>(
+                  value: data.regime,
+                  hint: const Text('Seleccionar', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                  isExpanded: true,
+                  icon: const Padding(
+                    padding: EdgeInsets.only(right: 12),
+                    child: Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  items: CompanyRegime.values.map((regime) {
+                    return DropdownMenuItem(value: regime, child: Text(regime.displayName, style: const TextStyle(fontSize: 14)));
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) notifier.updateRegime(val);
+                  },
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: 20),
 
-          if (data.regime != null) const Divider(height: 1),
+            if (data.regime == CompanyRegime.micro || data.regime == CompanyRegime.intern) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFF87171)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        data.regime == CompanyRegime.micro 
+                          ? 'Por ley, los trabajadores de Microempresa no tienen derecho a CTS.'
+                          : 'Por ley, los Practicantes no tienen derecho a CTS (reciben media subvención adicional cada 6 meses, no entra en este cálculo).',
+                        style: const TextStyle(color: Color(0xFF991B1B), fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
-          // 2. SUELDO BRUTO
-          if (data.regime != null)
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: TextFormField(
+            if (data.regime == CompanyRegime.general || data.regime == CompanyRegime.small) ...[
+              const Divider(height: 1),
+              const SizedBox(height: 20),
+
+              // 2. SUELDO BRUTO
+              const Text('Sueldo Bruto Mensual (S/)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: primaryBlue)),
+              const SizedBox(height: 8),
+              TextFormField(
                 initialValue: data.grossSalary == 0 ? '' : data.grossSalary.toStringAsFixed(0),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(fontSize: 16, color: textDark),
                 decoration: InputDecoration(
-                  labelText: 'Sueldo Bruto Mensual',
-                  prefixIcon: const Icon(Icons.attach_money_rounded, color: Color(0xFF007AFF)),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  filled: true,
+                  fillColor: lightBlueBg,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: borderColor)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
                 ),
                 onChanged: (v) => notifier.updateGrossSalary(double.tryParse(v) ?? 0),
               ),
-            ),
+              const SizedBox(height: 20),
 
-          if (data.grossSalary > 0) ...[
-            const Divider(height: 1),
-
-            // 3. FECHAS DE INICIO Y FIN
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: _selectStartDate,
-                      borderRadius: BorderRadius.circular(16),
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Fecha Inicio',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        child: Text(
-                          _startDate == null 
-                              ? 'Inicio' 
-                              : DateFormat('dd/MM/yy').format(_startDate!),
-                          style: TextStyle(
-                            color: _startDate == null ? Colors.black54 : Colors.black87,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ),
+              // 3. FECHA DE INICIO
+              const Text('Fecha de Inicio', style: TextStyle(fontSize: 14, color: textDark)),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: _selectStartDate,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: InkWell(
-                      onTap: _selectEndDate,
-                      borderRadius: BorderRadius.circular(16),
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Fecha Fin',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        child: Text(
-                          _endDate == null 
-                              ? 'Fin' 
-                              : DateFormat('dd/MM/yy').format(_endDate!),
-                          style: TextStyle(
-                            color: _endDate == null ? Colors.black54 : Colors.black87,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-
-            // 4. BONOS (3 o mas veces)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
-                children: [
-                  Row(
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Icon(Icons.star_rounded, color: Color(0xFF007AFF)),
-                      const SizedBox(width: 12),
-                      const Expanded(child: Text('¿Recibió bonos 3 o más veces?', style: TextStyle(fontSize: 15))),
-                      SegmentedButton<bool>(
-                        segments: const [
-                          ButtonSegment(value: true, label: Text('Sí')),
-                          ButtonSegment(value: false, label: Text('No')),
-                        ],
-                        selected: {_hasBonuses},
-                        onSelectionChanged: (set) {
-                          setState(() => _hasBonuses = set.first);
-                          if (!set.first) notifier.updateSemesterTotalBonuses(0);
-                        },
-                        showSelectedIcon: false,
+                      Text(
+                        _startDate == null ? 'Seleccionar' : DateFormat('dd/MM/yyyy').format(_startDate!),
+                        style: TextStyle(color: _startDate == null ? const Color(0xFF64748B) : textDark, fontSize: 14),
                       ),
+                      const Icon(Icons.calendar_today_rounded, color: Color(0xFF64748B), size: 20),
                     ],
                   ),
-                  if (_hasBonuses)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: TextFormField(
-                        initialValue: data.semesterTotalBonuses == 0 ? '' : data.semesterTotalBonuses.toStringAsFixed(0),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: InputDecoration(
-                          labelText: 'Suma TOTAL percibida en el semestre',
-                          prefixIcon: const Icon(Icons.monetization_on_outlined),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onChanged: (v) => notifier.updateSemesterTotalBonuses(double.tryParse(v) ?? 0),
-                      ),
-                    ),
-                ],
+                ),
               ),
-            ),
-            const Divider(height: 1),
+              const SizedBox(height: 20),
 
-            // 5. HORAS EXTRAS (3 o mas veces)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
+              // 4. SIGUE TRABAJANDO
+              const Text('¿Sigue trabajando actualmente?', style: TextStyle(fontSize: 14, color: textDark)),
+              const SizedBox(height: 8),
+              Row(
                 children: [
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.timer_rounded, color: Color(0xFF007AFF)),
-                      const SizedBox(width: 12),
-                      const Expanded(child: Text('¿Realizó horas extra 3 o más veces?', style: TextStyle(fontSize: 15))),
-                      SegmentedButton<bool>(
-                        segments: const [
-                          ButtonSegment(value: true, label: Text('Sí')),
-                          ButtonSegment(value: false, label: Text('No')),
-                        ],
-                        selected: {_hasOvertime},
-                        onSelectionChanged: (set) {
-                          setState(() => _hasOvertime = set.first);
-                          if (!set.first) notifier.updateSemesterTotalOvertime(0);
+                      Radio<bool>(
+                        value: true,
+                        groupValue: data.isCurrentlyWorking,
+                        activeColor: primaryBlue,
+                        onChanged: (val) {
+                          notifier.updateIsCurrentlyWorking(val ?? true);
+                          _calculateTimeFromDates();
                         },
-                        showSelectedIcon: false,
                       ),
+                      const Text('Sí', style: TextStyle(color: textDark)),
                     ],
                   ),
-                  if (_hasOvertime)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: TextFormField(
-                        initialValue: data.semesterTotalOvertime == 0 ? '' : data.semesterTotalOvertime.toStringAsFixed(0),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: InputDecoration(
-                          labelText: 'Monto TOTAL percibido en el semestre',
-                          prefixIcon: const Icon(Icons.monetization_on_outlined),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onChanged: (v) => notifier.updateSemesterTotalOvertime(double.tryParse(v) ?? 0),
+                  const SizedBox(width: 24),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Radio<bool>(
+                        value: false,
+                        groupValue: data.isCurrentlyWorking,
+                        activeColor: primaryBlue,
+                        onChanged: (val) {
+                          notifier.updateIsCurrentlyWorking(val ?? false);
+                          _calculateTimeFromDates();
+                        },
                       ),
-                    ),
+                      const Text('No', style: TextStyle(color: textDark)),
+                    ],
+                  ),
                 ],
               ),
-            ),
-            const SizedBox(height: 8),
+              
+              if (data.isCurrentlyWorking == false) ...[
+                const SizedBox(height: 12),
+                const Text('Fecha de Fin (Cese)', style: TextStyle(fontSize: 14, color: textDark)),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: _selectEndDate,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _endDate == null ? 'Seleccionar' : DateFormat('dd/MM/yyyy').format(_endDate!),
+                          style: TextStyle(color: _endDate == null ? const Color(0xFF64748B) : textDark, fontSize: 14),
+                        ),
+                        const Icon(Icons.calendar_today_rounded, color: Color(0xFF64748B), size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+
+              // 5. ASIGNACIÓN FAMILIAR
+              const Text('¿Tienes hijos? (Asignación Familiar)', style: TextStyle(fontSize: 14, color: textDark)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Radio<bool>(
+                        value: true,
+                        groupValue: data.hasFamilyAllowance,
+                        activeColor: primaryBlue,
+                        onChanged: (val) => notifier.updateFamilyAllowance(val ?? true),
+                      ),
+                      const Text('Sí', style: TextStyle(color: textDark)),
+                    ],
+                  ),
+                  const SizedBox(width: 24),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Radio<bool>(
+                        value: false,
+                        groupValue: data.hasFamilyAllowance,
+                        activeColor: primaryBlue,
+                        onChanged: (val) => notifier.updateFamilyAllowance(val ?? false),
+                      ),
+                      const Text('No', style: TextStyle(color: textDark)),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // 6. ÚLTIMA GRATIFICACIÓN
+              const Text('¿De cuánto fue su última gratificación?', style: TextStyle(fontSize: 14, color: textDark)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Radio<bool>(
+                        value: true,
+                        groupValue: data.hasLastGratification,
+                        activeColor: primaryBlue,
+                        onChanged: (val) => notifier.updateHasLastGratification(val ?? true),
+                      ),
+                      const Text('Ingresar monto', style: TextStyle(color: textDark)),
+                    ],
+                  ),
+                  const SizedBox(width: 24),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Radio<bool>(
+                        value: false,
+                        groupValue: data.hasLastGratification,
+                        activeColor: primaryBlue,
+                        onChanged: (val) {
+                          notifier.updateHasLastGratification(val ?? false);
+                          notifier.updateLastGratificationAmount(0);
+                        },
+                      ),
+                      const Text('No tuve gratificación', style: TextStyle(color: textDark)),
+                    ],
+                  ),
+                ],
+              ),
+              if (data.hasLastGratification == true) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  initialValue: data.lastGratificationAmount == 0 ? '' : data.lastGratificationAmount.toStringAsFixed(0),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: const TextStyle(fontSize: 16, color: textDark),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: 'Monto total recibido (S/)',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
+                  ),
+                  onChanged: (v) => notifier.updateLastGratificationAmount(double.tryParse(v) ?? 0),
+                ),
+              ],
+              const SizedBox(height: 20),
+
+              // 7. BONOS / COMISIONES
+              const Text('¿Recibió bonos/comisiones más de 3 veces en el semestre?', style: TextStyle(fontSize: 14, color: textDark)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Radio<bool>(
+                        value: true,
+                        groupValue: data.bonusesMeetRegularity,
+                        activeColor: primaryBlue,
+                        onChanged: (val) => notifier.updateBonusesMeetRegularity(val ?? true),
+                      ),
+                      const Text('Sí', style: TextStyle(color: textDark)),
+                    ],
+                  ),
+                  const SizedBox(width: 24),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Radio<bool>(
+                        value: false,
+                        groupValue: data.bonusesMeetRegularity,
+                        activeColor: primaryBlue,
+                        onChanged: (val) {
+                          notifier.updateBonusesMeetRegularity(val ?? false);
+                          notifier.updateBonuses(0);
+                        },
+                      ),
+                      const Text('No', style: TextStyle(color: textDark)),
+                    ],
+                  ),
+                ],
+              ),
+              if (data.bonusesMeetRegularity == true) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  initialValue: data.bonuses == 0 ? '' : data.bonuses.toStringAsFixed(0),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: const TextStyle(fontSize: 16, color: textDark),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: 'Monto total del semestre (S/)',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
+                  ),
+                  onChanged: (v) => notifier.updateBonuses(double.tryParse(v) ?? 0),
+                ),
+              ],
+              const SizedBox(height: 20),
+
+              // 7. HORAS EXTRAS
+              const Text('¿Hizo horas extra más de 3 veces en el semestre?', style: TextStyle(fontSize: 14, color: textDark)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Radio<bool>(
+                        value: true,
+                        groupValue: data.overtimeMeetRegularity,
+                        activeColor: primaryBlue,
+                        onChanged: (val) => notifier.updateOvertimeMeetRegularity(val ?? true),
+                      ),
+                      const Text('Sí', style: TextStyle(color: textDark)),
+                    ],
+                  ),
+                  const SizedBox(width: 24),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Radio<bool>(
+                        value: false,
+                        groupValue: data.overtimeMeetRegularity,
+                        activeColor: primaryBlue,
+                        onChanged: (val) {
+                          notifier.updateOvertimeMeetRegularity(val ?? false);
+                          notifier.updateOvertimeHours25(0);
+                          notifier.updateOvertimeHours35(0);
+                        },
+                      ),
+                      const Text('No', style: TextStyle(color: textDark)),
+                    ],
+                  ),
+                ],
+              ),
+              if (data.overtimeMeetRegularity == true) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: data.overtimeHours25 == 0 ? '' : data.overtimeHours25.toString(),
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(fontSize: 16, color: textDark),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: 'Horas 25%',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
+                        ),
+                        onChanged: (v) => notifier.updateOvertimeHours25(int.tryParse(v) ?? 0),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: data.overtimeHours35 == 0 ? '' : data.overtimeHours35.toString(),
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(fontSize: 16, color: textDark),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: 'Horas 35%',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
+                        ),
+                        onChanged: (v) => notifier.updateOvertimeHours35(int.tryParse(v) ?? 0),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
