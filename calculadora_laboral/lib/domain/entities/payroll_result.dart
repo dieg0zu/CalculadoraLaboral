@@ -20,7 +20,7 @@ class PayrollResult {
   final double netSalary;
 
   // ── Costos del empleador ───────────────────────────────────────────
-  final double employerEsSalud;
+  final double employerHealthCost;
 
   const PayrollResult({
     required this.grossSalary,
@@ -32,6 +32,6 @@ class PayrollResult {
     required this.fifthCategoryRetention,
     required this.totalDeductions,
     required this.netSalary,
-    required this.employerEsSalud,
+    required this.employerHealthCost,
   });
 }

@@ -18,6 +18,23 @@ class EmployeeDataNotifier extends StateNotifier<EmployeeData> {
     state = state.copyWith(hasFamilyAllowance: value);
   }
 
+  void updateRegime(CompanyRegime regime) {
+    // Si cambia el régimen y no es microempresa, pero el seguro es SIS, lo reseteamos a EsSalud
+    HealthInsurance currentInsurance = state.healthInsurance;
+    if (regime != CompanyRegime.micro && currentInsurance == HealthInsurance.sis) {
+      currentInsurance = HealthInsurance.essalud;
+    }
+    
+    state = state.copyWith(
+      regime: regime,
+      healthInsurance: currentInsurance,
+    );
+  }
+
+  void updateBonuses(double bonuses) {
+    state = state.copyWith(bonuses: bonuses.clamp(0, 999999));
+  }
+
   void updatePensionSystem(PensionSystem system) {
     state = state.copyWith(pensionSystem: system);
   }
@@ -46,12 +63,28 @@ class EmployeeDataNotifier extends StateNotifier<EmployeeData> {
     state = state.copyWith(workedDays: days.clamp(0, 30));
   }
 
-  void updateHasEps(bool value) {
-    state = state.copyWith(hasEps: value);
+  void updateHealthInsurance(HealthInsurance insurance) {
+    state = state.copyWith(healthInsurance: insurance);
+  }
+
+  void updateEpsCost(double cost) {
+    state = state.copyWith(epsCost: cost.clamp(0, 999999));
+  }
+
+  void updateVariablesMeetRegularity(bool value) {
+    state = state.copyWith(variablesMeetRegularity: value);
   }
 
   void updateCurrentMonth(int month) {
     state = state.copyWith(currentMonth: month.clamp(1, 12));
+  }
+
+  void updateSemesterTotalBonuses(double total) {
+    state = state.copyWith(semesterTotalBonuses: total.clamp(0, 999999));
+  }
+
+  void updateSemesterTotalOvertime(double total) {
+    state = state.copyWith(semesterTotalOvertime: total.clamp(0, 999999));
   }
 
   /// Resetea todos los campos a sus valores por defecto
@@ -60,9 +93,26 @@ class EmployeeDataNotifier extends StateNotifier<EmployeeData> {
   }
 }
 
-/// Provider global del estado del formulario.
-/// Toda la app observa este provider para mantenerse sincronizada.
+/// Provider del estado para Sueldo Neto Mensual
+final netSalaryDataProvider =
+    StateNotifierProvider<EmployeeDataNotifier, EmployeeData>(
+  (ref) => EmployeeDataNotifier(),
+);
+
+/// Provider global original (usado en Vacaciones/Liquidación)
 final employeeDataProvider =
+    StateNotifierProvider<EmployeeDataNotifier, EmployeeData>(
+  (ref) => EmployeeDataNotifier(),
+);
+
+/// Provider independiente del estado para Gratificación
+final gratificationDataProvider =
+    StateNotifierProvider<EmployeeDataNotifier, EmployeeData>(
+  (ref) => EmployeeDataNotifier(),
+);
+
+/// Provider independiente del estado para CTS
+final ctsDataProvider =
     StateNotifierProvider<EmployeeDataNotifier, EmployeeData>(
   (ref) => EmployeeDataNotifier(),
 );

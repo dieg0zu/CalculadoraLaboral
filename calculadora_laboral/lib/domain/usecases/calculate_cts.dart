@@ -2,7 +2,6 @@ import '../entities/employee_data.dart';
 import '../entities/cts_result.dart';
 import '../../core/constants/legal_parameters.dart';
 import 'calculate_family_allowance.dart';
-import 'calculate_gratification.dart';
 
 /// Calcula la CTS (Compensación por Tiempo de Servicios) semestral.
 ///
@@ -20,39 +19,37 @@ import 'calculate_gratification.dart';
 /// excluyen (caso conservador).
 final class CalculateCtsUseCase {
   final CalculateFamilyAllowanceUseCase _familyAllowance;
-  final CalculateGratificationUseCase _gratification;
 
   const CalculateCtsUseCase({
     CalculateFamilyAllowanceUseCase? familyAllowance,
-    CalculateGratificationUseCase? gratification,
   })  : _familyAllowance =
-            familyAllowance ?? const CalculateFamilyAllowanceUseCase(),
-        _gratification =
-            gratification ?? const CalculateGratificationUseCase();
+            familyAllowance ?? const CalculateFamilyAllowanceUseCase();
 
   CtsResult call(EmployeeData data) {
     final familyAllowance = _familyAllowance(data);
-    final gratResult = _gratification(data);
 
-    // Sexto de la gratificación semestral (componente CTS)
-    final sixthOfGratification =
-        gratResult.baseGratification / LegalParameters.kGratMonthsPerSemester;
+    // Los bonos y horas extras ya representan la suma total del semestre
+    // Se dividen entre 6 para obtener el promedio mensual
+    final avgBonuses = data.semesterTotalBonuses / 6;
+    final avgOvertime = data.semesterTotalOvertime / 6;
+    final regularVariablesAvg = avgBonuses + avgOvertime;
 
-    // Remuneración computable CTS
-    final computableSalary =
-        data.grossSalary + familyAllowance + sixthOfGratification;
+    final ibc = data.grossSalary + familyAllowance + regularVariablesAvg;
+    final sixthOfGratification = ibc / 6;
+    final computableSalary = ibc + sixthOfGratification;
 
-    // Meses y días
-    final completedMonths =
-        data.workedMonths.clamp(0, LegalParameters.kCtsMonthsPerSemester);
+    final regimeMultiplier = switch (data.regime) {
+      CompanyRegime.general => 1.0,
+      CompanyRegime.small => 0.5,
+      CompanyRegime.micro => 0.0,
+      null => 1.0,
+    };
+
+    final completedMonths = data.workedMonths.clamp(0, LegalParameters.kCtsMonthsPerSemester);
     final additionalDays = data.workedDays.clamp(0, 30);
 
-    // CTS por meses completos
-    final ctsForMonths = (computableSalary / 12) * completedMonths;
-
-    // CTS por días adicionales
-    final ctsForDays =
-        (computableSalary / LegalParameters.kCtsDaysPerYear) * additionalDays;
+    final ctsForMonths = (computableSalary / 12) * completedMonths * regimeMultiplier;
+    final ctsForDays = (computableSalary / LegalParameters.kCtsDaysPerYear) * additionalDays * regimeMultiplier;
 
     final totalCts = ctsForMonths + ctsForDays;
 

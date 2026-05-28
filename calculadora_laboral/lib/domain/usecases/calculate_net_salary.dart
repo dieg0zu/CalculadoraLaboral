@@ -40,38 +40,49 @@ final class CalculateNetSalaryUseCase {
   PayrollResult call(EmployeeData data) {
     // ── 1. Ingresos ────────────────────────────────────────────────
     final familyAllowance = _familyAllowance(data);
-    final overtimeResult = _overtime(data);
 
-    final totalEarnings = data.grossSalary +
-        familyAllowance +
-        overtimeResult.pay25 +
-        overtimeResult.pay35;
+    // Se eliminaron bonos y horas extra según lo solicitado
+    final totalEarnings = data.grossSalary + familyAllowance;
 
     // ── 2. Deducciones ─────────────────────────────────────────────
+    // Si es EPS se resta el monto ingresado ANTES del cálculo neto final
+    final epsDeduction = data.healthInsurance == HealthInsurance.eps ? data.epsCost : 0.0;
+    
+    // Calcula retención de pensión sobre el total
     final pensionDetail = _pension(data, totalEarnings);
-    final fifthResult = _fifthCategory(totalEarnings);
+
+    // Si el sueldo bruto supera 3200, calcula 5ta categoría
+    final fifthResult = data.grossSalary > 3200 
+        ? _fifthCategory(totalEarnings) 
+        : const FifthCategoryResult(annualTaxableIncome: 0, annualTax: 0, monthlyRetention: 0, bracketDetails: []);
 
     final totalDeductions =
-        pensionDetail.totalRetention + fifthResult.monthlyRetention;
+        pensionDetail.totalRetention + fifthResult.monthlyRetention + epsDeduction;
 
     // ── 3. Neto ────────────────────────────────────────────────────
     final netSalary = (totalEarnings - totalDeductions).clamp(0.0, double.infinity);
 
     // ── 4. Costo empleador ─────────────────────────────────────────
-    final employerEsSalud = data.grossSalary *
-        (data.hasEps ? LegalParameters.kEpsRate : LegalParameters.kEsSaludRate);
+    final double employerHealthCost;
+    if (data.healthInsurance == HealthInsurance.sis) {
+      employerHealthCost = LegalParameters.kSisFixedCost;
+    } else {
+      // Tanto para EsSalud regular como EPS, el costo total del empleador sobre la remuneración es 9%.
+      // (En EPS: 6.75% va a EsSalud y 2.25% a la EPS)
+      employerHealthCost = data.grossSalary * LegalParameters.kEsSaludRate;
+    }
 
     return PayrollResult(
       grossSalary: data.grossSalary,
       familyAllowance: familyAllowance,
-      overtimePay25: overtimeResult.pay25,
-      overtimePay35: overtimeResult.pay35,
+      overtimePay25: 0, // Eliminado
+      overtimePay35: 0, // Eliminado
       totalEarnings: totalEarnings,
       pensionDetail: pensionDetail,
       fifthCategoryRetention: fifthResult.monthlyRetention,
       totalDeductions: totalDeductions,
       netSalary: netSalary,
-      employerEsSalud: employerEsSalud,
+      employerHealthCost: employerHealthCost,
     );
   }
 }

@@ -26,23 +26,23 @@ final _liquidationUseCase = Provider((_) => const CalculateLiquidationUseCase())
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Resultado mensual completo: neto, ingresos, deducciones.
-/// Se recalcula automáticamente cada vez que cambia [employeeDataProvider].
+/// Se recalcula automáticamente cada vez que cambia [netSalaryDataProvider].
 final payrollResultProvider = Provider<PayrollResult>((ref) {
-  final data = ref.watch(employeeDataProvider);
+  final data = ref.watch(netSalaryDataProvider);
   final useCase = ref.watch(_netSalaryUseCase);
   return useCase(data);
 });
 
 /// Resultado de gratificación semestral.
 final gratificationResultProvider = Provider<GratificationResult>((ref) {
-  final data = ref.watch(employeeDataProvider);
+  final data = ref.watch(gratificationDataProvider);
   final useCase = ref.watch(_gratificationUseCase);
   return useCase(data);
 });
 
 /// Resultado de CTS semestral.
 final ctsResultProvider = Provider<CtsResult>((ref) {
-  final data = ref.watch(employeeDataProvider);
+  final data = ref.watch(ctsDataProvider);
   final useCase = ref.watch(_ctsUseCase);
   return useCase(data);
 });

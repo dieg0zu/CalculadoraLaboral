@@ -25,8 +25,12 @@ abstract final class LegalParameters {
   /// Tasa de aporte EsSalud (empleador) — 9%
   static const double kEsSaludRate = 0.09;
 
-  /// Tasa de aporte EPS (empleador) — 6.75% (cuando aplique)
-  static const double kEpsRate = 0.0675;
+  /// Tasa de aporte EPS (empleador) — 6.75% (cuando aplique) a EsSalud + 2.25% a EPS
+  /// Para el MVP, el costo general sigue siendo 9%.
+  static const double kEpsRate = 0.0675; // Porcentaje que va a EsSalud
+
+  /// Costo fijo empleador SIS Microempresa
+  static const double kSisFixedCost = 15.0;
 
   // ─────────────────────────────────────────────────────────────────
   // Sistema Privado de Pensiones (AFP) — retención del trabajador
@@ -192,6 +196,32 @@ enum AfpCommissionType {
         AfpCommissionType.flujo => 'Comisión sobre el flujo',
         AfpCommissionType.mixta => 'Comisión mixta',
         AfpCommissionType.noSabe => 'No estoy seguro',
+      };
+}
+
+/// Tipos de régimen laboral de empresa
+enum CompanyRegime {
+  general,
+  small,
+  micro;
+
+  String get displayName => switch (this) {
+        CompanyRegime.general => 'Régimen General',
+        CompanyRegime.small => 'Pequeña Empresa',
+        CompanyRegime.micro => 'Microempresa',
+      };
+}
+
+/// Tipo de Seguro de Salud
+enum HealthInsurance {
+  sis,
+  essalud,
+  eps;
+
+  String get displayName => switch (this) {
+        HealthInsurance.sis => 'SIS Microempresa',
+        HealthInsurance.essalud => 'EsSalud Regular',
+        HealthInsurance.eps => 'EPS',
       };
 }
 

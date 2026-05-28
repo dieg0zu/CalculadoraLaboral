@@ -6,6 +6,7 @@ import '../widgets/results/section_card.dart';
 import '../widgets/results/result_row_widget.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/constants/legal_parameters.dart';
 
 /// Pantalla que muestra ÚNICAMENTE el resultado del cálculo del Sueldo Neto.
 /// Se abre como una nueva ventana después de hacer clic en "Calcular ahora".
@@ -14,6 +15,7 @@ class NetSalaryResultScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(netSalaryDataProvider);
     final result = ref.watch(payrollResultProvider);
     final textTheme = Theme.of(context).textTheme;
 
@@ -165,10 +167,34 @@ class NetSalaryResultScreen extends ConsumerWidget {
                     amount: result.fifthCategoryRetention,
                     type: ResultRowType.deduction,
                   ),
+                if (data.epsCost > 0)
+                  ResultRow(
+                    label: 'Descuento Plan EPS',
+                    amount: data.epsCost,
+                    type: ResultRowType.deduction,
+                  ),
                 ResultRow(
                   label: 'Total deducciones',
                   amount: result.totalDeductions,
                   type: ResultRowType.total,
+                  isLast: true,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // ── Costo del Empleador ─────────────────────────────────
+            SectionCard(
+              title: 'COSTOS DEL EMPLEADOR',
+              icon: Icons.business_center_rounded,
+              children: [
+                ResultRow(
+                  label: data.healthInsurance.displayName,
+                  subtitle: data.healthInsurance == HealthInsurance.sis 
+                      ? 'Costo fijo mensual' 
+                      : 'Aporte obligatorio (9%)',
+                  amount: result.employerHealthCost,
+                  type: ResultRowType.income,
                   isLast: true,
                 ),
               ],

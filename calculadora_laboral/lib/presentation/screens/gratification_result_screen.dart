@@ -5,6 +5,7 @@ import '../widgets/results/section_card.dart';
 import '../widgets/results/result_row_widget.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/constants/legal_parameters.dart';
 
 class GratificationResultScreen extends ConsumerWidget {
   const GratificationResultScreen({super.key});
@@ -140,9 +141,11 @@ class GratificationResultScreen extends ConsumerWidget {
                     type: ResultRowType.income,
                   ),
                   ResultRow(
-                    label: result.usedEps
+                    label: result.healthInsurance == HealthInsurance.eps
                         ? 'Bonif. extraord. Ley 29351 (EPS 6.75%)'
-                        : 'Bonif. extraord. Ley 29351 (EsSalud 9%)',
+                        : result.healthInsurance == HealthInsurance.sis
+                            ? 'Bonif. extraord. (0% SIS)'
+                            : 'Bonif. extraord. Ley 29351 (EsSalud 9%)',
                     subtitle: 'Pagada por el empleador al trabajador',
                     amount: result.extraordinaryBonus,
                     type: ResultRowType.income,

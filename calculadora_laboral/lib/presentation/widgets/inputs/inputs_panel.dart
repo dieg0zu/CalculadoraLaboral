@@ -9,9 +9,20 @@ import '../../providers/employee_data_provider.dart';
 /// [showWorkedTimeFields] — si false, oculta los campos de meses y días
 /// (usado en la pantalla de Sueldo Neto donde se asume un mes completo).
 class InputsPanel extends ConsumerStatefulWidget {
+  final bool showBonuses;
+  final bool showPensionSystem;
+  final bool showEps;
   final bool showWorkedTimeFields;
+  final bool showWorkedDays;
 
-  const InputsPanel({super.key, this.showWorkedTimeFields = true});
+  const InputsPanel({
+    super.key,
+    this.showBonuses = true,
+    this.showPensionSystem = true,
+    this.showEps = true,
+    this.showWorkedTimeFields = true,
+    this.showWorkedDays = true,
+  });
 
   @override
   ConsumerState<InputsPanel> createState() => _InputsPanelState();
@@ -19,10 +30,12 @@ class InputsPanel extends ConsumerStatefulWidget {
 
 class _InputsPanelState extends ConsumerState<InputsPanel> {
   late TextEditingController _salaryController;
+  late TextEditingController _bonusesController;
   late TextEditingController _overtime25Controller;
   late TextEditingController _overtime35Controller;
   late TextEditingController _monthsController;
   late TextEditingController _daysController;
+  late TextEditingController _epsCostController;
 
   bool _hasOvertime = false;
 
@@ -32,6 +45,8 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
     final data = ref.read(employeeDataProvider);
     _salaryController = TextEditingController(
         text: data.grossSalary > 0 ? data.grossSalary.toStringAsFixed(2) : '');
+    _bonusesController = TextEditingController(
+        text: data.bonuses > 0 ? data.bonuses.toStringAsFixed(2) : '');
     _overtime25Controller = TextEditingController(
         text: data.overtimeHours25 > 0 ? data.overtimeHours25.toString() : '');
     _overtime35Controller = TextEditingController(
@@ -40,6 +55,8 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
         text: data.workedMonths > 0 ? data.workedMonths.toString() : '');
     _daysController = TextEditingController(
         text: data.workedDays > 0 ? data.workedDays.toString() : '');
+    _epsCostController = TextEditingController(
+        text: data.epsCost > 0 ? data.epsCost.toStringAsFixed(2) : '');
     _hasOvertime =
         data.overtimeHours25 > 0 || data.overtimeHours35 > 0;
   }
@@ -47,10 +64,12 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
   @override
   void dispose() {
     _salaryController.dispose();
+    _bonusesController.dispose();
     _overtime25Controller.dispose();
     _overtime35Controller.dispose();
     _monthsController.dispose();
     _daysController.dispose();
+    _epsCostController.dispose();
     super.dispose();
   }
 
@@ -104,10 +123,12 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
                   onPressed: () {
                     notifier.reset();
                     _salaryController.text = '';
+                    _bonusesController.text = '';
                     _overtime25Controller.text = '';
                     _overtime35Controller.text = '';
                     _monthsController.text = '';
                     _daysController.text = '';
+                    _epsCostController.text = '';
                     setState(() => _hasOvertime = false);
                   },
                 ),
@@ -125,7 +146,7 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
                     RegExp(r'^\d+\.?\d{0,2}')),
               ],
               decoration: InputDecoration(
-                labelText: 'Sueldo Bruto Mensual',
+                labelText: 'Sueldo Bruto Mensual (incluir bonos si existiera)',
                 hintText: 'Ingresar sueldo bruto',
                 prefixIcon: const Icon(Icons.attach_money_rounded),
                 prefixText: 'S/. ',
@@ -139,39 +160,96 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
             ),
             const SizedBox(height: 14),
 
-            // ── Asignación Familiar ─────────────────────────────────
-            _SwitchTile(
-              title: 'Asignación Familiar',
-              subtitle:
-                  'S/. ${LegalParameters.kFamilyAllowance.toStringAsFixed(2)} / mes (10% RMV)',
-              icon: Icons.family_restroom_rounded,
-              value: data.hasFamilyAllowance,
-              onChanged: notifier.updateFamilyAllowance,
-            ),
-            const SizedBox(height: 14),
-
-            // ── Sistema Pensionario ─────────────────────────────────
-            DropdownButtonFormField<PensionSystem>(
-              value: data.pensionSystem,
+            // ── Régimen de empresa ──────────────────────────────────
+            DropdownButtonFormField<CompanyRegime>(
+              value: data.regime,
               hint: const Text('Seleccionar'),
               decoration: const InputDecoration(
-                labelText: 'Sistema Pensionario',
-                prefixIcon: Icon(Icons.account_balance_rounded),
+                labelText: 'Régimen Laboral',
+                prefixIcon: Icon(Icons.business_center_rounded),
               ),
               dropdownColor: Colors.white,
-              items: PensionSystem.values
-                  .map((s) => DropdownMenuItem(
-                        value: s,
-                        child: Text(s.displayName),
+              items: CompanyRegime.values
+                  .map((r) => DropdownMenuItem(
+                        value: r,
+                        child: Text(r.displayName),
                       ))
                   .toList(),
-              onChanged: (v) => notifier.updatePensionSystem(v!),
+              onChanged: (v) => notifier.updateRegime(v!),
             ),
 
-            // ── AFP (condicional) ───────────────────────────────────
-            if (data.pensionSystem == PensionSystem.afp) ...[
+            if (data.regime != null) ...[
               const SizedBox(height: 14),
-              DropdownButtonFormField<AfpType>(
+
+              if (widget.showBonuses) ...[
+                // ── Bonos y Comisiones ──────────────────────────────────
+                TextFormField(
+                  controller: _bonusesController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Bonos / Comisiones',
+                    hintText: 'Ingresar monto (opcional)',
+                    prefixIcon: Icon(Icons.monetization_on_rounded),
+                    prefixText: 'S/. ',
+                    helperText: 'Promedio mensual o monto fijo',
+                  ),
+                  onChanged: (v) {
+                    final parsed = double.tryParse(v) ?? 0;
+                    notifier.updateBonuses(parsed);
+                  },
+                ),
+
+                // Regla de Regularidad
+                if (data.bonuses > 0 || _hasOvertime) ...[
+                  const SizedBox(height: 14),
+                  _SwitchTile(
+                    title: '¿Percibido ≥ 3 meses?',
+                    subtitle: 'Requisito para computar en CTS/Grati',
+                    icon: Icons.rule_rounded,
+                    value: data.variablesMeetRegularity,
+                    onChanged: notifier.updateVariablesMeetRegularity,
+                  ),
+                ],
+                const SizedBox(height: 14),
+              ],
+
+              // ── Asignación Familiar ─────────────────────────────────
+              _SwitchTile(
+                title: 'Asignación Familiar',
+                subtitle:
+                    'S/. ${LegalParameters.kFamilyAllowance.toStringAsFixed(2)} / mes (10% RMV)',
+                icon: Icons.family_restroom_rounded,
+                value: data.hasFamilyAllowance ?? false,
+                onChanged: notifier.updateFamilyAllowance,
+              ),
+              const SizedBox(height: 14),
+
+              if (widget.showPensionSystem) ...[
+                // ── Sistema Pensionario ─────────────────────────────────
+                DropdownButtonFormField<PensionSystem>(
+                  value: data.pensionSystem,
+                  hint: const Text('Seleccionar'),
+                  decoration: const InputDecoration(
+                    labelText: 'Sistema Pensionario',
+                    prefixIcon: Icon(Icons.account_balance_rounded),
+                  ),
+                  dropdownColor: Colors.white,
+                  items: PensionSystem.values
+                      .map((s) => DropdownMenuItem(
+                            value: s,
+                            child: Text(s.displayName),
+                          ))
+                      .toList(),
+                  onChanged: (v) => notifier.updatePensionSystem(v!),
+                ),
+
+                // ── AFP (condicional) ───────────────────────────────────
+                if (data.pensionSystem == PensionSystem.afp) ...[
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<AfpType>(
                 value: data.afpType,
                 hint: const Text('Seleccionar'),
                 decoration: const InputDecoration(
@@ -208,13 +286,14 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
               ),
 
               // Ayuda "No estoy seguro"
-              if (data.commissionType == AfpCommissionType.noSabe) ...[
-                const SizedBox(height: 8),
-                _CommissionHelpBanner(),
+                  if (data.commissionType == AfpCommissionType.noSabe) ...[
+                    const SizedBox(height: 8),
+                    _CommissionHelpBanner(),
+                  ],
+                ],
               ],
-            ],
 
-            const SizedBox(height: 14),
+              const SizedBox(height: 14),
 
             // ── Horas Extra — Toggle ────────────────────────────────
             _SwitchTile(
@@ -292,7 +371,7 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
                         FilteringTextInputFormatter.digitsOnly
                       ],
                       decoration: const InputDecoration(
-                        labelText: 'Meses trabajados',
+                        labelText: 'Número de meses trabajados',
                         prefixIcon: Icon(Icons.calendar_month_rounded),
                         helperText: 'En el semestre (0–6)',
                       ),
@@ -300,38 +379,75 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
                           notifier.updateWorkedMonths(int.tryParse(v) ?? 0),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _daysController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly
-                      ],
-                      decoration: const InputDecoration(
-                        labelText: 'Días adicionales',
-                        prefixIcon: Icon(Icons.today_rounded),
-                        helperText: 'Del último mes (0–30)',
+                  if (widget.showWorkedDays) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _daysController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        decoration: const InputDecoration(
+                          labelText: 'Días adicionales',
+                          prefixIcon: Icon(Icons.today_rounded),
+                          helperText: 'Del último mes (0–30)',
+                        ),
+                        onChanged: (v) =>
+                            notifier.updateWorkedDays(int.tryParse(v) ?? 0),
                       ),
-                      onChanged: (v) =>
-                          notifier.updateWorkedDays(int.tryParse(v) ?? 0),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ],
 
-            const SizedBox(height: 14),
+            if (widget.showEps) ...[
+              const SizedBox(height: 14),
 
-            // ── EPS / EsSalud ───────────────────────────────────────
-            _SwitchTile(
-              title: 'Empresa con EPS',
-              subtitle: 'Bonif. ext. 6.75% (en lugar de 9% EsSalud)',
-              icon: Icons.health_and_safety_rounded,
-              value: data.hasEps,
-              onChanged: notifier.updateHasEps,
-            ),
-          ],
+              // ── Seguro de Salud ───────────────────────────────────────
+              DropdownButtonFormField<HealthInsurance>(
+                value: data.healthInsurance,
+                hint: const Text('Seleccionar'),
+                decoration: const InputDecoration(
+                  labelText: 'Seguro de Salud',
+                  prefixIcon: Icon(Icons.health_and_safety_rounded),
+                ),
+                dropdownColor: Colors.white,
+                items: HealthInsurance.values
+                    .where((h) => data.regime == CompanyRegime.micro || h != HealthInsurance.sis)
+                    .map((h) => DropdownMenuItem(
+                          value: h,
+                          child: Text(h.displayName),
+                        ))
+                    .toList(),
+                onChanged: (v) => notifier.updateHealthInsurance(v!),
+              ),
+
+              if (data.healthInsurance == HealthInsurance.eps) ...[
+                const SizedBox(height: 14),
+                TextFormField(
+                  controller: _epsCostController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Costo Plan Comercial (EPS)',
+                    hintText: 'Monto a descontar al trabajador',
+                    prefixIcon: Icon(Icons.payment_rounded),
+                    prefixText: 'S/. ',
+                  ),
+                  onChanged: (v) {
+                    final parsed = double.tryParse(v) ?? 0;
+                    notifier.updateEpsCost(parsed);
+                  },
+                ),
+              ],
+            ],
+
+          ], // Cierra if (data.regime != null)
+          ], // Cierra children de Column
         ),
       ),
     );

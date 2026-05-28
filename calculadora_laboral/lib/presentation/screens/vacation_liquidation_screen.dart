@@ -15,7 +15,13 @@ class VacationLiquidationScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const InputsPanel(showWorkedTimeFields: true),
+          const InputsPanel(
+            showBonuses: true,
+            showPensionSystem: true,
+            showEps: true,
+            showWorkedTimeFields: true,
+            showWorkedDays: true,
+          ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,

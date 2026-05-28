@@ -15,7 +15,7 @@ final class CalculateFamilyAllowanceUseCase {
   /// Retorna el monto de asignación familiar en S/.
   /// Retorna 0.0 si el trabajador no tiene carga familiar.
   double call(EmployeeData data) {
-    if (!data.hasFamilyAllowance) return 0.0;
+    if (data.hasFamilyAllowance != true) return 0.0;
     return LegalParameters.kRMV * LegalParameters.kFamilyAllowanceRate;
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../widgets/inputs/inputs_panel.dart';
+import '../widgets/inputs/gratification_inputs_panel.dart';
 import '../providers/employee_data_provider.dart';
 import 'gratification_result_screen.dart';
 
@@ -15,9 +15,8 @@ class GratificationScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // En esta pantalla sí se pide el tiempo trabajado,
-          // por lo que habilitamos los campos en el InputsPanel
-          const InputsPanel(showWorkedTimeFields: true),
+          // Usa el nuevo panel independiente para Gratificación
+          const GratificationInputsPanel(),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -25,7 +24,7 @@ class GratificationScreen extends ConsumerWidget {
               icon: const Icon(Icons.calculate_rounded, size: 20),
               label: const Text('Calcular ahora'),
               onPressed: () {
-                final data = ref.read(employeeDataProvider);
+                final data = ref.read(gratificationDataProvider);
                 if (data.grossSalary <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Por favor, ingresa el sueldo bruto')),
