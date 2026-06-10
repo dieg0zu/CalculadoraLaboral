@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/screens/net_salary_screen.dart';
 import 'presentation/screens/gratification_screen.dart';
 import 'presentation/screens/cts_screen.dart';
-import 'presentation/screens/vacation_liquidation_screen.dart';
+import 'presentation/screens/liquidation_screen.dart';
 import 'presentation/screens/info_screen.dart';
 
 void main() {
@@ -22,6 +23,14 @@ class CalculadoraLaboralApp extends StatelessWidget {
     return MaterialApp(
       title: 'Calculadora Laboral PE',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', 'ES'),
+      ],
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
@@ -70,8 +79,8 @@ class _MainShellState extends State<MainShell> {
       label: 'Liquidac.',
       icon: Icons.receipt_long_outlined,
       activeIcon: Icons.receipt_long_rounded,
-      screen: VacationLiquidationScreen(),
-      appBarTitle: 'Vacaciones y Liquidación',
+      screen: LiquidationScreen(),
+      appBarTitle: 'Liquidación Total',
     ),
     _TabItem(
       label: 'Info',
@@ -111,7 +120,7 @@ class _MainShellState extends State<MainShell> {
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: Chip(
-                label: const Text('🇵🇪 2025',
+                label: const Text('🇵🇪 2026',
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

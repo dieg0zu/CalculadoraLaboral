@@ -26,6 +26,20 @@ class GratificationScreen extends ConsumerWidget {
               label: const Text('Calcular ahora'),
               onPressed: () {
                 final data = ref.read(gratificationDataProvider);
+                if (data.hasInvalidDates || data.workedMonths == 0 && data.workedDays == 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor, ingresa fechas válidas y asegúrate que no haya errores.')),
+                  );
+                  return;
+                }
+
+                if (data.hasInvalidDates || data.workedMonths == 0 && data.workedDays == 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor, ingresa fechas válidas y asegúrate que no haya errores.')),
+                  );
+                  return;
+                }
+
                 if (data.regime == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Por favor, selecciona un régimen laboral')),

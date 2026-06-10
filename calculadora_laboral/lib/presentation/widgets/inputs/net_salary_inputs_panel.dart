@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/legal_parameters.dart';
 import '../../providers/employee_data_provider.dart';
@@ -51,8 +53,9 @@ class _NetSalaryInputsPanelState extends ConsumerState<NetSalaryInputsPanel> {
             ),
             const SizedBox(height: 8),
             TextFormField(
-              initialValue: data.grossSalary == 0 ? '' : data.grossSalary.toStringAsFixed(0),
+              initialValue: data.grossSalary == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.grossSalary),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
               style: const TextStyle(fontSize: 16, color: textDark),
               decoration: InputDecoration(
                 filled: true,
@@ -67,7 +70,7 @@ class _NetSalaryInputsPanelState extends ConsumerState<NetSalaryInputsPanel> {
                   borderSide: const BorderSide(color: primaryBlue, width: 1.5),
                 ),
               ),
-              onChanged: (v) => notifier.updateGrossSalary(double.tryParse(v) ?? 0),
+              onChanged: (v) => notifier.updateGrossSalary(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
             ),
             const SizedBox(height: 20),
 
@@ -249,8 +252,9 @@ class _NetSalaryInputsPanelState extends ConsumerState<NetSalaryInputsPanel> {
                   if (data.healthInsurance == HealthInsurance.eps) ...[
                     const SizedBox(height: 12),
                     TextFormField(
-                      initialValue: data.epsCost == 0 ? '' : data.epsCost.toStringAsFixed(0),
+                      initialValue: data.epsCost == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.epsCost),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
                       style: const TextStyle(fontSize: 14, color: textDark),
                       decoration: InputDecoration(
                         filled: true,
@@ -266,7 +270,7 @@ class _NetSalaryInputsPanelState extends ConsumerState<NetSalaryInputsPanel> {
                           borderSide: const BorderSide(color: primaryBlue),
                         ),
                       ),
-                      onChanged: (v) => notifier.updateEpsCost(double.tryParse(v) ?? 0),
+                      onChanged: (v) => notifier.updateEpsCost(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
                     ),
                   ]
                 ],

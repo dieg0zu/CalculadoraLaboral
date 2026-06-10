@@ -263,33 +263,11 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
                           child: Text(a.displayName),
                         ))
                     .toList(),
-                onChanged: (v) => notifier.updateAfpType(v!),
+                onChanged: (v) {
+                  notifier.updateAfpType(v!);
+                  notifier.updateCommissionType(AfpCommissionType.mixta);
+                },
               ),
-              const SizedBox(height: 14),
-
-              // Tipo de comisión
-              DropdownButtonFormField<AfpCommissionType>(
-                value: data.commissionType,
-                hint: const Text('Seleccionar'),
-                decoration: const InputDecoration(
-                  labelText: 'Tipo de comisión AFP',
-                  prefixIcon: Icon(Icons.percent_rounded),
-                ),
-                dropdownColor: Colors.white,
-                items: AfpCommissionType.values
-                    .map((c) => DropdownMenuItem(
-                          value: c,
-                          child: Text(c.displayName),
-                        ))
-                    .toList(),
-                onChanged: (v) => notifier.updateCommissionType(v!),
-              ),
-
-              // Ayuda "No estoy seguro"
-                  if (data.commissionType == AfpCommissionType.noSabe) ...[
-                    const SizedBox(height: 8),
-                    _CommissionHelpBanner(),
-                  ],
                 ],
               ],
 

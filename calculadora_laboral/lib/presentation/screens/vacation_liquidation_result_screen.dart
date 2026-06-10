@@ -11,7 +11,7 @@ class VacationLiquidationResultScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final result = ref.watch(liquidationResultProvider);
+    final result = null;
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(

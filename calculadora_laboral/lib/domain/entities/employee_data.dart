@@ -61,6 +61,14 @@ class EmployeeData {
 
   /// ¿Sigue trabajando actualmente?
   final bool? isCurrentlyWorking;
+  
+  final bool hasInvalidDates;
+
+  /// ¿Recibió la CTS anterior? (Liquidation)
+  final bool? hasReceivedLastCts;
+
+  /// Monto de bonos pendientes (Liquidation)
+  final double pendingBonuses;
 
   /// ¿Recibió gratificación en el último periodo? (Para CTS)
   final bool? hasLastGratification;
@@ -90,8 +98,11 @@ class EmployeeData {
     this.overtimeMeetRegularity,
     this.isCurrentlyWorking,
     this.currentMonth = 6,
+    this.hasInvalidDates = false,
     this.semesterTotalBonuses = 0.0,
     this.semesterTotalOvertime = 0.0,
+    this.hasReceivedLastCts,
+    this.pendingBonuses = 0.0,
     this.hasLastGratification,
     this.lastGratificationAmount = 0.0,
   });
@@ -115,8 +126,11 @@ class EmployeeData {
     bool? overtimeMeetRegularity,
     bool? isCurrentlyWorking,
     int? currentMonth,
+    bool? hasInvalidDates,
     double? semesterTotalBonuses,
     double? semesterTotalOvertime,
+    bool? hasReceivedLastCts,
+    double? pendingBonuses,
     bool? hasLastGratification,
     double? lastGratificationAmount,
     bool clearPensionSystem = false,
@@ -141,9 +155,12 @@ class EmployeeData {
       bonusesMeetRegularity: bonusesMeetRegularity ?? this.bonusesMeetRegularity,
       overtimeMeetRegularity: overtimeMeetRegularity ?? this.overtimeMeetRegularity,
       isCurrentlyWorking: isCurrentlyWorking ?? this.isCurrentlyWorking,
+      hasInvalidDates: hasInvalidDates ?? this.hasInvalidDates,
       currentMonth: currentMonth ?? this.currentMonth,
       semesterTotalBonuses: semesterTotalBonuses ?? this.semesterTotalBonuses,
       semesterTotalOvertime: semesterTotalOvertime ?? this.semesterTotalOvertime,
+      hasReceivedLastCts: hasReceivedLastCts ?? this.hasReceivedLastCts,
+      pendingBonuses: pendingBonuses ?? this.pendingBonuses,
       hasLastGratification: hasLastGratification ?? this.hasLastGratification,
       lastGratificationAmount: lastGratificationAmount ?? this.lastGratificationAmount,
     );

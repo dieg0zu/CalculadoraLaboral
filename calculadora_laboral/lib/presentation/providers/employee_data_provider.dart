@@ -79,6 +79,10 @@ class EmployeeDataNotifier extends StateNotifier<EmployeeData> {
     state = state.copyWith(bonusesMeetRegularity: meet);
   }
 
+  void updateHasInvalidDates(bool val) {
+    state = state.copyWith(hasInvalidDates: val);
+  }
+
   void updateOvertimeMeetRegularity(bool meet) {
     state = state.copyWith(overtimeMeetRegularity: meet);
   }

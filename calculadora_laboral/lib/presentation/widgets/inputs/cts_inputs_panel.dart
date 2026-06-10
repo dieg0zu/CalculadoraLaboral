@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/legal_parameters.dart';
@@ -440,7 +441,7 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
                         activeColor: primaryBlue,
                         onChanged: (val) {
                           notifier.updateBonusesMeetRegularity(val ?? false);
-                          notifier.updateBonuses(0);
+                          notifier.updateSemesterTotalBonuses(0);
                         },
                       ),
                       const Text('No', style: TextStyle(color: textDark)),
@@ -451,18 +452,21 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
               if (data.bonusesMeetRegularity == true) ...[
                 const SizedBox(height: 12),
                 TextFormField(
-                  initialValue: data.bonuses == 0 ? '' : data.bonuses.toStringAsFixed(0),
+                  initialValue: data.semesterTotalBonuses == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.semesterTotalBonuses),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
                   style: const TextStyle(fontSize: 16, color: textDark),
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
                     hintText: 'Monto total del semestre (S/)',
+                    prefixText: 'S/ ',
+                    prefixStyle: const TextStyle(color: textDark, fontSize: 16),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
                   ),
-                  onChanged: (v) => notifier.updateBonuses(double.tryParse(v) ?? 0),
+                  onChanged: (v) => notifier.updateSemesterTotalBonuses(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
                 ),
               ],
               const SizedBox(height: 20),
@@ -494,8 +498,7 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
                         activeColor: primaryBlue,
                         onChanged: (val) {
                           notifier.updateOvertimeMeetRegularity(val ?? false);
-                          notifier.updateOvertimeHours25(0);
-                          notifier.updateOvertimeHours35(0);
+                          notifier.updateSemesterTotalOvertime(0);
                         },
                       ),
                       const Text('No', style: TextStyle(color: textDark)),
@@ -509,35 +512,21 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
                   children: [
                     Expanded(
                       child: TextFormField(
-                        initialValue: data.overtimeHours25 == 0 ? '' : data.overtimeHours25.toString(),
-                        keyboardType: TextInputType.number,
+                        initialValue: data.semesterTotalOvertime == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.semesterTotalOvertime),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
                         style: const TextStyle(fontSize: 16, color: textDark),
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.white,
-                          hintText: 'Horas 25%',
+                          hintText: 'Monto total del semestre (S/)',
+                          prefixText: 'S/ ',
+                          prefixStyle: const TextStyle(color: textDark, fontSize: 16),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
                         ),
-                        onChanged: (v) => notifier.updateOvertimeHours25(int.tryParse(v) ?? 0),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: data.overtimeHours35 == 0 ? '' : data.overtimeHours35.toString(),
-                        keyboardType: TextInputType.number,
-                        style: const TextStyle(fontSize: 16, color: textDark),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          hintText: 'Horas 35%',
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
-                        ),
-                        onChanged: (v) => notifier.updateOvertimeHours35(int.tryParse(v) ?? 0),
+                        onChanged: (v) => notifier.updateSemesterTotalOvertime(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
                       ),
                     ),
                   ],

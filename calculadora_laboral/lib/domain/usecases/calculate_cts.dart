@@ -30,16 +30,11 @@ final class CalculateCtsUseCase {
 
     double regularVariablesAvg = 0;
     if (data.overtimeMeetRegularity == true) {
-      if (data.overtimeHours25 > 0 || data.overtimeHours35 > 0) {
-        final hourlyRate = data.grossSalary / 30 / 8;
-        final overtimeTotal = (data.overtimeHours25 * hourlyRate * 1.25) +
-                              (data.overtimeHours35 * hourlyRate * 1.35);
-        regularVariablesAvg += overtimeTotal / 6;
-      }
+      regularVariablesAvg += data.semesterTotalOvertime / 6;
     }
     
     if (data.bonusesMeetRegularity == true) {
-      regularVariablesAvg += data.bonuses / 6;
+      regularVariablesAvg += data.semesterTotalBonuses / 6;
     }
 
     // El 1/6 de gratificación

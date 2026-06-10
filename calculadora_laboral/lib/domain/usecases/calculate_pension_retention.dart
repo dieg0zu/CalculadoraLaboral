@@ -66,23 +66,8 @@ final class CalculatePensionRetentionUseCase {
 
     // Comisión AFP
     // noSabe se trata como mixta (corresponde al ~80% del mercado)
-    final double afpCommission;
-    final String commLabel;
-
-    final effectiveCommission = data.commissionType == AfpCommissionType.flujo
-        ? AfpCommissionType.flujo
-        : AfpCommissionType.mixta; // mixta y noSabe → mismo cálculo
-
-    if (effectiveCommission == AfpCommissionType.flujo) {
-      afpCommission = totalRem * commission.flujoRate;
-      commLabel = 'flujo';
-    } else {
-      // Comisión mixta: componente sobre el flujo mensual
-      afpCommission = totalRem * commission.mixtaFlujoRate;
-      commLabel = data.commissionType == AfpCommissionType.noSabe
-          ? 'mixta (estimada)'
-          : 'mixta';
-    }
+    final double afpCommission = totalRem * commission.mixtaFlujoRate;
+    final String commLabel = 'mixta';
 
     final totalRetention = fondoAporte + afpCommission + insurancePremium;
 

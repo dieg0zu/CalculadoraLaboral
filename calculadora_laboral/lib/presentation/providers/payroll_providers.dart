@@ -3,7 +3,6 @@ import '../../domain/entities/payroll_result.dart';
 import '../../domain/entities/gratification_result.dart';
 import '../../domain/entities/cts_result.dart';
 import '../../domain/entities/vacation_result.dart';
-import '../../domain/entities/liquidation_result.dart';
 import '../../domain/usecases/calculate_net_salary.dart';
 import '../../domain/usecases/calculate_gratification.dart';
 import '../../domain/usecases/calculate_cts.dart';
@@ -19,7 +18,6 @@ final _netSalaryUseCase = Provider((_) => const CalculateNetSalaryUseCase());
 final _gratificationUseCase = Provider((_) => const CalculateGratificationUseCase());
 final _ctsUseCase = Provider((_) => const CalculateCtsUseCase());
 final _vacationUseCase = Provider((_) => const CalculateVacationUseCase());
-final _liquidationUseCase = Provider((_) => const CalculateLiquidationUseCase());
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Providers de resultados (computed — se recalculan en tiempo real)
@@ -54,9 +52,3 @@ final vacationResultProvider = Provider<VacationResult>((ref) {
   return useCase(data);
 });
 
-/// Resultado de liquidación básica por cese.
-final liquidationResultProvider = Provider<LiquidationResult>((ref) {
-  final data = ref.watch(employeeDataProvider);
-  final useCase = ref.watch(_liquidationUseCase);
-  return useCase(data);
-});

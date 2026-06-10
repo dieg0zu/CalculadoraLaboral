@@ -37,6 +37,10 @@ dependencies:
   intl: ^0.20.2
 
   cupertino_icons: ^1.0.8
+  flutter_localizations:
+    sdk: flutter
+  mask_text_input_formatter: ^2.9.0
+  currency_text_input_formatter: ^2.3.0
 
 dev_dependencies:
   flutter_test:
