@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'date_validation_formatter.dart';
 import '../../../core/constants/legal_parameters.dart';
 import '../../providers/employee_data_provider.dart';
 
@@ -13,8 +15,41 @@ class GratificationInputsPanel extends ConsumerStatefulWidget {
 }
 
 class _GratificationInputsPanelState extends ConsumerState<GratificationInputsPanel> {
+  final _startDateController = TextEditingController();
+  final _endDateController = TextEditingController();
+
+  final _dateMaskFormatter = DateTextFormatter();
+
   DateTime? _startDate;
   DateTime? _endDate;
+
+  @override
+  void dispose() {
+    _startDateController.dispose();
+    _endDateController.dispose();
+    super.dispose();
+  }
+
+  void _parseManualDate(String val, bool isStart) {
+    try {
+      if (val.length == 10) {
+        final parts = val.split('/');
+        if (parts.length == 3) {
+          int d = int.parse(parts[0]);
+          int m = int.parse(parts[1]);
+          int y = int.parse(parts[2]);
+          if (y < 100) y += 2000;
+          final date = DateTime(y, m, d);
+          setState(() {
+            if (isStart) _startDate = date;
+            else _endDate = date;
+          });
+          _calculateTimeFromDates();
+        }
+      }
+    } catch (_) {}
+  }
+
 
   void _calculateTimeFromDates() {
     if (_startDate == null) return;
@@ -93,6 +128,7 @@ class _GratificationInputsPanelState extends ConsumerState<GratificationInputsPa
     if (picked != null) {
       setState(() {
         _startDate = picked;
+        _startDateController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
       _calculateTimeFromDates();
     }
@@ -109,6 +145,7 @@ class _GratificationInputsPanelState extends ConsumerState<GratificationInputsPa
     if (picked != null) {
       setState(() {
         _endDate = picked;
+        _endDateController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
       _calculateTimeFromDates();
     }
@@ -206,8 +243,9 @@ class _GratificationInputsPanelState extends ConsumerState<GratificationInputsPa
               const Text('Sueldo Bruto Mensual (S/)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: primaryBlue)),
               const SizedBox(height: 8),
               TextFormField(
-                initialValue: data.grossSalary == 0 ? '' : data.grossSalary.toStringAsFixed(0),
+                initialValue: data.grossSalary == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.grossSalary),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
                 style: const TextStyle(fontSize: 16, color: textDark),
                 decoration: InputDecoration(
                   filled: true,
@@ -216,36 +254,31 @@ class _GratificationInputsPanelState extends ConsumerState<GratificationInputsPa
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: borderColor)),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
                 ),
-                onChanged: (v) => notifier.updateGrossSalary(double.tryParse(v) ?? 0),
+                onChanged: (v) => notifier.updateGrossSalary(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
               ),
               const SizedBox(height: 20),
 
               // 3. FECHA DE INICIO
               const Text('Fecha de Inicio', style: TextStyle(fontSize: 14, color: textDark)),
               const SizedBox(height: 8),
-              InkWell(
-                onTap: _selectStartDate,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+              TextFormField(
+                controller: _startDateController,
+                keyboardType: TextInputType.datetime,
+                inputFormatters: [_dateMaskFormatter],
+                style: const TextStyle(fontSize: 16, color: textDark),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'DD/MM/YYYY',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.calendar_today_rounded, color: Color(0xFF64748B), size: 20),
+                    onPressed: _selectStartDate,
                   ),
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _startDate == null ? 'Seleccionar' : DateFormat('dd/MM/yyyy').format(_startDate!),
-                        style: TextStyle(color: _startDate == null ? const Color(0xFF64748B) : textDark, fontSize: 14),
-                      ),
-                      const Icon(Icons.calendar_today_rounded, color: Color(0xFF64748B), size: 20),
-                    ],
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
                 ),
+                onChanged: (val) => _parseManualDate(val, true),
               ),
               const SizedBox(height: 20),
 
@@ -391,9 +424,9 @@ class _GratificationInputsPanelState extends ConsumerState<GratificationInputsPa
               if (data.bonusesMeetRegularity == true) ...[
                 const SizedBox(height: 12),
                 TextFormField(
-                  initialValue: data.semesterTotalBonuses == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.semesterTotalBonuses),
+                  initialValue: data.semesterTotalBonuses == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.semesterTotalBonuses),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
+                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
                   style: const TextStyle(fontSize: 16, color: textDark),
                   decoration: InputDecoration(
                     filled: true,
@@ -451,9 +484,9 @@ class _GratificationInputsPanelState extends ConsumerState<GratificationInputsPa
                   children: [
                     Expanded(
                       child: TextFormField(
-                        initialValue: data.semesterTotalOvertime == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.semesterTotalOvertime),
+                        initialValue: data.semesterTotalOvertime == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.semesterTotalOvertime),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
+                        inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
                         style: const TextStyle(fontSize: 16, color: textDark),
                         decoration: InputDecoration(
                           filled: true,

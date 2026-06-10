@@ -4,6 +4,7 @@ import 'package:currency_text_input_formatter/currency_text_input_formatter.dart
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'date_validation_formatter.dart';
 
 import '../../../core/constants/legal_parameters.dart';
 import '../../providers/liquidation_data_provider.dart';
@@ -21,17 +22,9 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
 
-  final _startDateMaskFormatter = MaskTextInputFormatter(
-    mask: '##/##/####', 
-    filter: { "#": RegExp(r'[0-9]') },
-    type: MaskAutoCompletionType.lazy
-  );
+  final _startDateMaskFormatter = DateTextFormatter();
   
-  final _endDateMaskFormatter = MaskTextInputFormatter(
-    mask: '##/##/####', 
-    filter: { "#": RegExp(r'[0-9]') },
-    type: MaskAutoCompletionType.lazy
-  );
+  final _endDateMaskFormatter = DateTextFormatter();
 
 
   DateTime? _startDate;
@@ -264,9 +257,9 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
             const Text('Sueldo Bruto Mensual (S/)', style: TextStyle(color: primaryBlue, fontSize: 14, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextFormField(
-              initialValue: data.grossSalary == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.grossSalary),
+              initialValue: data.grossSalary == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.grossSalary),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
+              inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
               style: const TextStyle(fontSize: 16, color: textDark),
               decoration: InputDecoration(
                 filled: true,
@@ -388,9 +381,9 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
             if (data.bonusesMeetRegularity == true) ...[
               const SizedBox(height: 12),
               TextFormField(
-                initialValue: data.semesterTotalBonuses == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.semesterTotalBonuses),
+                initialValue: data.semesterTotalBonuses == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.semesterTotalBonuses),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
+                inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
                 style: const TextStyle(fontSize: 16, color: textDark),
                 decoration: InputDecoration(
                   filled: true,
@@ -448,9 +441,9 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                 children: [
                   Expanded(
                     child: TextFormField(
-                      initialValue: data.semesterTotalOvertime == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.semesterTotalOvertime),
+                      initialValue: data.semesterTotalOvertime == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.semesterTotalOvertime),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
+                      inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
                       style: const TextStyle(fontSize: 16, color: textDark),
                       decoration: InputDecoration(
                         filled: true,
@@ -474,9 +467,9 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
             const Text('Bonos pendientes a pagar (opcional)', style: TextStyle(color: textDark, fontSize: 14)),
             const SizedBox(height: 8),
             TextFormField(
-              initialValue: data.pendingBonuses == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.pendingBonuses),
+              initialValue: data.pendingBonuses == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.pendingBonuses),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
+              inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
               style: const TextStyle(fontSize: 16, color: textDark),
               decoration: InputDecoration(
                 filled: true,
@@ -488,7 +481,7 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
               ),
-              onChanged: (val) => notifier.updatePendingBonuses(double.tryParse(val) ?? 0.0),
+              onChanged: (val) => notifier.updatePendingBonuses(double.tryParse(val.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0),
             ),
             const SizedBox(height: 24),
 

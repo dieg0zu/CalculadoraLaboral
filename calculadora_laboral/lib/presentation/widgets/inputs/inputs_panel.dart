@@ -154,7 +154,7 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
                     'RMV mínima: S/. ${LegalParameters.kRMV.toStringAsFixed(2)}',
               ),
               onChanged: (v) {
-                final parsed = double.tryParse(v) ?? 0;
+                final parsed = double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0;
                 notifier.updateGrossSalary(parsed);
               },
             ),
@@ -197,7 +197,7 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
                     helperText: 'Promedio mensual o monto fijo',
                   ),
                   onChanged: (v) {
-                    final parsed = double.tryParse(v) ?? 0;
+                    final parsed = double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0;
                     notifier.updateBonuses(parsed);
                   },
                 ),
@@ -417,7 +417,7 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
                     prefixText: 'S/. ',
                   ),
                   onChanged: (v) {
-                    final parsed = double.tryParse(v) ?? 0;
+                    final parsed = double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0;
                     notifier.updateEpsCost(parsed);
                   },
                 ),

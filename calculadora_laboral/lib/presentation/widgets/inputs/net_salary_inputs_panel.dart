@@ -53,9 +53,9 @@ class _NetSalaryInputsPanelState extends ConsumerState<NetSalaryInputsPanel> {
             ),
             const SizedBox(height: 8),
             TextFormField(
-              initialValue: data.grossSalary == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.grossSalary),
+              initialValue: data.grossSalary == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.grossSalary),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
+              inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
               style: const TextStyle(fontSize: 16, color: textDark),
               decoration: InputDecoration(
                 filled: true,
@@ -252,9 +252,9 @@ class _NetSalaryInputsPanelState extends ConsumerState<NetSalaryInputsPanel> {
                   if (data.healthInsurance == HealthInsurance.eps) ...[
                     const SizedBox(height: 12),
                     TextFormField(
-                      initialValue: data.epsCost == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '').formatDouble(data.epsCost),
+                      initialValue: data.epsCost == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.epsCost),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [CurrencyTextInputFormatter.currency(locale: 'es', symbol: '')],
+              inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
                       style: const TextStyle(fontSize: 14, color: textDark),
                       decoration: InputDecoration(
                         filled: true,
