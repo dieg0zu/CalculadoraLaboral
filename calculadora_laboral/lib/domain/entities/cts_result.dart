@@ -9,6 +9,8 @@ class CtsResult {
   final double ctsForMonths;
   final double ctsForDays;
   final double totalCts;
+  final double ctsDepositadaBanco;
+  final double ctsTruncaLiquidacion;
 
   const CtsResult({
     required this.grossSalary,
@@ -20,5 +22,7 @@ class CtsResult {
     required this.ctsForMonths,
     required this.ctsForDays,
     required this.totalCts,
+    this.ctsDepositadaBanco = 0.0,
+    this.ctsTruncaLiquidacion = 0.0,
   });
 }

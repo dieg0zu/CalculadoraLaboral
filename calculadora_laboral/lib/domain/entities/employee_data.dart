@@ -62,6 +62,12 @@ class EmployeeData {
   /// ¿Sigue trabajando actualmente?
   final bool? isCurrentlyWorking;
   
+  /// Fecha de inicio
+  final DateTime? startDate;
+  
+  /// Fecha de cese
+  final DateTime? endDate;
+  
   final bool hasInvalidDates;
 
   /// ¿Recibió la CTS anterior? (Liquidation)
@@ -97,6 +103,8 @@ class EmployeeData {
     this.bonusesMeetRegularity,
     this.overtimeMeetRegularity,
     this.isCurrentlyWorking,
+    this.startDate,
+    this.endDate,
     this.currentMonth = 6,
     this.hasInvalidDates = false,
     this.semesterTotalBonuses = 0.0,
@@ -125,6 +133,8 @@ class EmployeeData {
     bool? bonusesMeetRegularity,
     bool? overtimeMeetRegularity,
     bool? isCurrentlyWorking,
+    DateTime? startDate,
+    DateTime? endDate,
     int? currentMonth,
     bool? hasInvalidDates,
     double? semesterTotalBonuses,
@@ -155,6 +165,8 @@ class EmployeeData {
       bonusesMeetRegularity: bonusesMeetRegularity ?? this.bonusesMeetRegularity,
       overtimeMeetRegularity: overtimeMeetRegularity ?? this.overtimeMeetRegularity,
       isCurrentlyWorking: isCurrentlyWorking ?? this.isCurrentlyWorking,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
       hasInvalidDates: hasInvalidDates ?? this.hasInvalidDates,
       currentMonth: currentMonth ?? this.currentMonth,
       semesterTotalBonuses: semesterTotalBonuses ?? this.semesterTotalBonuses,
@@ -187,6 +199,8 @@ class EmployeeData {
           bonusesMeetRegularity == other.bonusesMeetRegularity &&
           overtimeMeetRegularity == other.overtimeMeetRegularity &&
           isCurrentlyWorking == other.isCurrentlyWorking &&
+          startDate == other.startDate &&
+          endDate == other.endDate &&
           currentMonth == other.currentMonth &&
           semesterTotalBonuses == other.semesterTotalBonuses &&
           semesterTotalOvertime == other.semesterTotalOvertime &&
@@ -212,6 +226,8 @@ class EmployeeData {
         bonusesMeetRegularity,
         overtimeMeetRegularity,
         isCurrentlyWorking,
+        startDate,
+        endDate,
         currentMonth,
         semesterTotalBonuses,
         semesterTotalOvertime,

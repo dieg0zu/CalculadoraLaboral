@@ -13,6 +13,14 @@ class LiquidationDataNotifier extends StateNotifier<EmployeeData> {
     state = state.copyWith(hasFamilyAllowance: hasAllowance);
   }
 
+  void updateStartDate(DateTime? date) {
+    state = state.copyWith(startDate: date);
+  }
+
+  void updateEndDate(DateTime? date) {
+    state = state.copyWith(endDate: date);
+  }
+
   void updateHasReceivedLastCts(bool hasReceived) {
     state = state.copyWith(hasReceivedLastCts: hasReceived);
   }

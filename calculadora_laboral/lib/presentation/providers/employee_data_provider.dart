@@ -91,6 +91,14 @@ class EmployeeDataNotifier extends StateNotifier<EmployeeData> {
     state = state.copyWith(isCurrentlyWorking: working);
   }
 
+  void updateStartDate(DateTime? date) {
+    state = state.copyWith(startDate: date);
+  }
+
+  void updateEndDate(DateTime? date) {
+    state = state.copyWith(endDate: date);
+  }
+
   void updateCurrentMonth(int month) {
     state = state.copyWith(currentMonth: month.clamp(1, 12));
   }

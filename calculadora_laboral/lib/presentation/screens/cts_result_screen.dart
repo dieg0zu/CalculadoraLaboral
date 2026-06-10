@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/payroll_providers.dart';
+import '../providers/employee_data_provider.dart';
 import '../widgets/results/section_card.dart';
 import '../widgets/results/result_row_widget.dart';
 import '../../core/utils/currency_formatter.dart';
@@ -12,9 +13,11 @@ class CtsResultScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final result = ref.watch(ctsResultProvider);
+    final data = ref.watch(ctsDataProvider);
     final textTheme = Theme.of(context).textTheme;
 
-
+    final isWorking = data.isCurrentlyWorking ?? true;
+    final hasDeposit = result.ctsDepositadaBanco > 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -29,88 +32,46 @@ class CtsResultScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Banner principal azul ─────────────────────────────────
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF007AFF), Color(0xFF0056B3)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            if (isWorking) ...[
+              _buildBannerCard(
+                title: 'CTS PROYECTADA A DEPOSITAR',
+                amount: result.totalCts,
+                color1: const Color(0xFF007AFF),
+                color2: const Color(0xFF0056B3),
+                icon: Icons.account_balance_rounded,
+                textTheme: textTheme,
+              ),
+            ] else ...[
+              if (hasDeposit) ...[
+                _buildBannerCard(
+                  title: 'CTS DEPOSITADA EN BANCO',
+                  amount: result.ctsDepositadaBanco,
+                  color1: const Color(0xFF007AFF),
+                  color2: const Color(0xFF0056B3),
+                  icon: Icons.account_balance_rounded,
+                  textTheme: textTheme,
                 ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.kBlue.withValues(alpha: 0.35),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'DEPÓSITO DE CTS',
-                          style: TextStyle(
-                            fontSize: 12,
-                            letterSpacing: 2.0,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          CurrencyFormatter.format(result.totalCts),
-                          style: textTheme.headlineLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 38,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.account_balance_rounded,
-                      color: Colors.white,
-                      size: 38,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // ── Aviso Importante ─────────────────────────────
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFF87171)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.info_outline_rounded, color: Color(0xFFDC2626)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Aviso: Este cálculo asume que aún no se le ha depositado la CTS correspondiente a este periodo. Si ya se le depositó y cesa sus labores poco después, este monto NO es adicional; solo le correspondería el cálculo por los días extra trabajados después de su último depósito.',
-                      style: const TextStyle(color: Color(0xFF991B1B), fontSize: 13, height: 1.4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                const SizedBox(height: 16),
+                _buildBannerCard(
+                  title: 'CTS TRUNCA (LIQUIDACIÓN)',
+                  amount: result.ctsTruncaLiquidacion,
+                  color1: const Color(0xFF10B981),
+                  color2: const Color(0xFF059669),
+                  icon: Icons.monetization_on_rounded,
+                  textTheme: textTheme,
+                ),
+              ] else ...[
+                _buildBannerCard(
+                  title: 'CTS TRUNCA (LIQUIDACIÓN)',
+                  amount: result.ctsTruncaLiquidacion,
+                  color1: const Color(0xFF10B981),
+                  color2: const Color(0xFF059669),
+                  icon: Icons.monetization_on_rounded,
+                  textTheme: textTheme,
+                ),
+              ],
+            ],
+            
             const SizedBox(height: 24),
 
             // ── Botón Volver a calcular ─────────────────────────────
@@ -125,6 +86,75 @@ class CtsResultScreen extends ConsumerWidget {
             const SizedBox(height: 16),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildBannerCard({
+    required String title,
+    required double amount,
+    required Color color1,
+    required Color color2,
+    required IconData icon,
+    required TextTheme textTheme,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color1, color2],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color1.withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    letterSpacing: 2.0,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  CurrencyFormatter.format(amount),
+                  style: textTheme.headlineLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 38,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 38,
+            ),
+          ),
+        ],
       ),
     );
   }

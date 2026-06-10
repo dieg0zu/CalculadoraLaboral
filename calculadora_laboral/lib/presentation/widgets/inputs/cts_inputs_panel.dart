@@ -123,6 +123,8 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
 
     notifier.updateWorkedMonths(months);
     notifier.updateWorkedDays(days);
+    notifier.updateStartDate(_startDate);
+    notifier.updateEndDate(_endDate);
   }
 
   Future<void> _selectStartDate() async {
