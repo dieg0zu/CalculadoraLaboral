@@ -43,16 +43,17 @@ class CtsScreen extends ConsumerWidget {
               label: const Text('Calcular Ahora', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               onPressed: () {
                 final data = ref.read(ctsDataProvider);
-                if (data.hasInvalidDates || data.workedMonths == 0 && data.workedDays == 0) {
+
+                if (data.startDate == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa fechas válidas y asegúrate que no haya errores.')),
+                    const SnackBar(content: Text('Por favor, ingresa la fecha de inicio')),
                   );
                   return;
                 }
-
-                if (data.hasInvalidDates || data.workedMonths == 0 && data.workedDays == 0) {
+                
+                if (data.isCurrentlyWorking == false && data.endDate == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa fechas válidas y asegúrate que no haya errores.')),
+                    const SnackBar(content: Text('Por favor, ingresa la fecha de cese')),
                   );
                   return;
                 }
@@ -113,9 +114,23 @@ class CtsScreen extends ConsumerWidget {
                   return;
                 }
 
-                if (data.overtimeMeetRegularity == null && (data.overtimeHours25 > 0 || data.overtimeHours35 > 0)) {
+                if (data.bonusesMeetRegularity == true && data.semesterTotalBonuses <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor, ingresa el monto total de bonos')),
+                  );
+                  return;
+                }
+
+                if (data.overtimeMeetRegularity == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Por favor, indica la regularidad de las horas extras')),
+                  );
+                  return;
+                }
+
+                if (data.overtimeMeetRegularity == true && data.semesterTotalOvertime <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor, ingresa el monto total de horas extras')),
                   );
                   return;
                 }

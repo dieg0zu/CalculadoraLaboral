@@ -26,16 +26,17 @@ class GratificationScreen extends ConsumerWidget {
               label: const Text('Calcular ahora'),
               onPressed: () {
                 final data = ref.read(gratificationDataProvider);
-                if (data.hasInvalidDates || data.workedMonths == 0 && data.workedDays == 0) {
+
+                if (data.startDate == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa fechas válidas y asegúrate que no haya errores.')),
+                    const SnackBar(content: Text('Por favor, ingresa la fecha de inicio')),
                   );
                   return;
                 }
-
-                if (data.hasInvalidDates || data.workedMonths == 0 && data.workedDays == 0) {
+                
+                if (data.isCurrentlyWorking == false && data.endDate == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa fechas válidas y asegúrate que no haya errores.')),
+                    const SnackBar(content: Text('Por favor, ingresa la fecha de cese')),
                   );
                   return;
                 }
@@ -75,16 +76,30 @@ class GratificationScreen extends ConsumerWidget {
                   return;
                 }
 
-                if (data.bonusesMeetRegularity == null && data.bonuses > 0) {
+                if (data.bonusesMeetRegularity == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Por favor, indica la regularidad de los bonos')),
                   );
                   return;
                 }
+
+                if (data.bonusesMeetRegularity == true && data.semesterTotalBonuses <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor, ingresa el monto total de bonos')),
+                  );
+                  return;
+                }
                 
-                if (data.overtimeMeetRegularity == null && (data.overtimeHours25 > 0 || data.overtimeHours35 > 0)) {
+                if (data.overtimeMeetRegularity == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Por favor, indica la regularidad de las horas extras')),
+                  );
+                  return;
+                }
+
+                if (data.overtimeMeetRegularity == true && data.semesterTotalOvertime <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor, ingresa el monto total de horas extras')),
                   );
                   return;
                 }

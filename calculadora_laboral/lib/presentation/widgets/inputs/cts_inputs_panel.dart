@@ -334,29 +334,24 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
                 const SizedBox(height: 12),
                 const Text('Fecha de Fin (Cese)', style: TextStyle(fontSize: 14, color: textDark)),
                 const SizedBox(height: 8),
-                InkWell(
-                  onTap: _selectEndDate,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    height: 48,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                TextFormField(
+                  controller: _endDateController,
+                  keyboardType: TextInputType.datetime,
+                  inputFormatters: [_dateMaskFormatter],
+                  style: const TextStyle(fontSize: 16, color: textDark),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: 'DD/MM/YYYY',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.calendar_today_rounded, color: Color(0xFF64748B), size: 20),
+                      onPressed: _selectEndDate,
                     ),
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _endDate == null ? 'Seleccionar' : DateFormat('dd/MM/yyyy').format(_endDate!),
-                          style: TextStyle(color: _endDate == null ? const Color(0xFF64748B) : textDark, fontSize: 14),
-                        ),
-                        const Icon(Icons.calendar_today_rounded, color: Color(0xFF64748B), size: 20),
-                      ],
-                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
                   ),
+                  onChanged: (val) => _parseManualDate(val, false),
                 ),
               ],
               const SizedBox(height: 20),
@@ -433,8 +428,9 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
               if (data.hasLastGratification == true) ...[
                 const SizedBox(height: 12),
                 TextFormField(
-                  initialValue: data.lastGratificationAmount == 0 ? '' : data.lastGratificationAmount.toStringAsFixed(0),
+                  initialValue: data.lastGratificationAmount == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.lastGratificationAmount),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
                   style: const TextStyle(fontSize: 16, color: textDark),
                   decoration: InputDecoration(
                     filled: true,
@@ -444,7 +440,10 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
                   ),
-                  onChanged: (v) => notifier.updateLastGratificationAmount(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
+                  onChanged: (v) {
+                    final cleanValue = v.replaceAll('.', '').replaceAll(',', '.');
+                    notifier.updateLastGratificationAmount(double.tryParse(cleanValue) ?? 0);
+                  },
                 ),
               ],
               const SizedBox(height: 20),

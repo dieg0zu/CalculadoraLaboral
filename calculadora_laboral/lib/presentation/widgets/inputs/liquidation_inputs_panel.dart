@@ -92,9 +92,16 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
   }
 
   void _onCalculatePressed() {
-    if (_startDate == null || _endDate == null) {
+    if (_startDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa fechas válidas (DD/MM/YYYY).')),
+        const SnackBar(content: Text('Por favor, ingresa la fecha de inicio.')),
+      );
+      return;
+    }
+    
+    if (_endDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, ingresa la fecha de cese.')),
       );
       return;
     }
@@ -121,20 +128,6 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
       return;
     }
     
-    if (data.hasFamilyAllowance == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, indica si tienes hijos (Asignación Familiar).')),
-      );
-      return;
-    }
-    
-    if (data.hasReceivedLastCts == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, indica si recibiste tu última CTS.')),
-      );
-      return;
-    }
-    
     if (data.grossSalary <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor, ingresa un sueldo bruto válido.')),
@@ -155,13 +148,44 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
       );
       return;
     }
-    
-    if (data.grossSalary <= 0) {
+
+    if (data.bonusesMeetRegularity == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa un sueldo bruto válido.')),
+        const SnackBar(content: Text('Por favor, indica si recibiste bonos/comisiones.')),
       );
       return;
     }
+    
+    if (data.bonusesMeetRegularity == true && data.semesterTotalBonuses <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, ingresa el monto total de bonos/comisiones.')),
+      );
+      return;
+    }
+    
+    if (data.overtimeMeetRegularity == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, indica si hiciste horas extras.')),
+      );
+      return;
+    }
+
+    if (data.overtimeMeetRegularity == true && data.semesterTotalOvertime <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, ingresa el monto total de horas extras.')),
+      );
+      return;
+    }
+    
+
+
+    if (data.healthInsurance == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, selecciona un seguro de salud.')),
+      );
+      return;
+    }
+
     if (data.pensionSystem == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor, selecciona un sistema de pensión.')),
