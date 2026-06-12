@@ -15,7 +15,10 @@ class LiquidationScreen extends ConsumerStatefulWidget {
 class _LiquidationScreenState extends ConsumerState<LiquidationScreen> {
 
   void _onCalculate(DateTime startDate, DateTime endDate) {
-    final data = ref.read(liquidationDataProvider);
+    final data = ref.read(liquidationDataProvider).copyWith(
+      startDate: startDate,
+      endDate: endDate,
+    );
     final calculateUseCase = CalculateLiquidationUseCase();
     
     final result = calculateUseCase(data);

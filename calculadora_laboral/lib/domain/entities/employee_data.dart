@@ -35,8 +35,14 @@ class EmployeeData {
   /// Suma total de bonos en el semestre (para CTS)
   final double semesterTotalBonuses;
 
-  /// Suma total de horas extra percibidas en el semestre (para CTS)
+  /// Suma de horas extra percibidas en meses ANTERIORES del semestre (excluye el mes de cese).
+  /// Se usa para calcular el promedio que entra en la base computable de gratificación y CTS.
   final double semesterTotalOvertime;
+
+  /// Horas extra del mes de CESE únicamente.
+  /// Se suma directamente al ingreso del mes (extraPayments) y afecta la base imponible de AFP/ONP,
+  /// pero NO entra en el promedio semestral de la gratificación trunca.
+  final double currentMonthOvertime;
 
   /// Meses completos trabajados en el semestre/año (para truncos y CTS)
   final int workedMonths;
@@ -70,8 +76,11 @@ class EmployeeData {
   
   final bool hasInvalidDates;
 
-  /// ¿Recibió la CTS anterior? (Liquidation)
-  final bool? hasReceivedLastCts;
+  /// ¿Ha gozado vacaciones? (Liquidation)
+  final bool? hasTakenVacations;
+
+  /// Días de vacaciones ya gozadas (Liquidation)
+  final int takenVacationDays;
 
   /// Monto de bonos pendientes (Liquidation)
   final double pendingBonuses;
@@ -109,7 +118,9 @@ class EmployeeData {
     this.hasInvalidDates = false,
     this.semesterTotalBonuses = 0.0,
     this.semesterTotalOvertime = 0.0,
-    this.hasReceivedLastCts,
+    this.currentMonthOvertime = 0.0,
+    this.hasTakenVacations,
+    this.takenVacationDays = 0,
     this.pendingBonuses = 0.0,
     this.hasLastGratification,
     this.lastGratificationAmount = 0.0,
@@ -139,7 +150,9 @@ class EmployeeData {
     bool? hasInvalidDates,
     double? semesterTotalBonuses,
     double? semesterTotalOvertime,
-    bool? hasReceivedLastCts,
+    double? currentMonthOvertime,
+    bool? hasTakenVacations,
+    int? takenVacationDays,
     double? pendingBonuses,
     bool? hasLastGratification,
     double? lastGratificationAmount,
@@ -171,7 +184,9 @@ class EmployeeData {
       currentMonth: currentMonth ?? this.currentMonth,
       semesterTotalBonuses: semesterTotalBonuses ?? this.semesterTotalBonuses,
       semesterTotalOvertime: semesterTotalOvertime ?? this.semesterTotalOvertime,
-      hasReceivedLastCts: hasReceivedLastCts ?? this.hasReceivedLastCts,
+      currentMonthOvertime: currentMonthOvertime ?? this.currentMonthOvertime,
+      hasTakenVacations: hasTakenVacations ?? this.hasTakenVacations,
+      takenVacationDays: takenVacationDays ?? this.takenVacationDays,
       pendingBonuses: pendingBonuses ?? this.pendingBonuses,
       hasLastGratification: hasLastGratification ?? this.hasLastGratification,
       lastGratificationAmount: lastGratificationAmount ?? this.lastGratificationAmount,
@@ -204,6 +219,7 @@ class EmployeeData {
           currentMonth == other.currentMonth &&
           semesterTotalBonuses == other.semesterTotalBonuses &&
           semesterTotalOvertime == other.semesterTotalOvertime &&
+          currentMonthOvertime == other.currentMonthOvertime &&
           hasLastGratification == other.hasLastGratification &&
           lastGratificationAmount == other.lastGratificationAmount;
 
@@ -231,6 +247,7 @@ class EmployeeData {
         currentMonth,
         semesterTotalBonuses,
         semesterTotalOvertime,
+        currentMonthOvertime,
         hasLastGratification,
         lastGratificationAmount,
       ]);

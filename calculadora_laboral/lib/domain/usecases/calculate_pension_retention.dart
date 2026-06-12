@@ -61,13 +61,16 @@ final class CalculatePensionRetentionUseCase {
     // Aporte obligatorio al fondo de pensiones: 10%
     final fondoAporte = totalRem * LegalParameters.kAfpFondoRate;
 
-    // Prima de seguro (igual para flujo y mixta)
+    // Prima de seguro (igual para flujo y mixta): 1.37%
     final insurancePremium = totalRem * commission.primaSeguoRate;
 
-    // Comisión AFP
-    // noSabe se trata como mixta (corresponde al ~80% del mercado)
-    final double afpCommission = totalRem * commission.mixtaFlujoRate;
-    final String commLabel = 'mixta';
+    // Comisión AFP según el tipo elegido
+    // - Flujo:      porcentaje fijo sobre cada remuneración (flujoRate)
+    // - Mixta/noSabe: componente flujo de la comisión mixta (mixtaFlujoRate = 0% desde feb-2023)
+    final bool isFlujo = data.commissionType == AfpCommissionType.flujo;
+    final double afpCommission =
+        totalRem * (isFlujo ? commission.flujoRate : commission.mixtaFlujoRate);
+    final String commLabel = isFlujo ? 'flujo' : 'mixta';
 
     final totalRetention = fondoAporte + afpCommission + insurancePremium;
 

@@ -142,9 +142,12 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
       return;
     }
     
-    if (data.hasReceivedLastCts == null) {
+
+
+
+    if (data.hasTakenVacations == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, indica si recibiste tu última CTS.')),
+        const SnackBar(content: Text('Por favor, indica si ha gozado de días de descanso vacacional.')),
       );
       return;
     }
@@ -230,6 +233,62 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ── Régimen ──
+            const Text('Régimen de la Empresa', style: TextStyle(fontSize: 14, color: textDark)),
+            const SizedBox(height: 8),
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<CompanyRegime>(
+                  value: data.regime,
+                  hint: const Text('Seleccionar', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                  isExpanded: true,
+                  icon: const Padding(
+                    padding: EdgeInsets.only(right: 12),
+                    child: Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  items: const [
+                    DropdownMenuItem(value: CompanyRegime.general, child: Text('General', style: TextStyle(fontSize: 14))),
+                    DropdownMenuItem(value: CompanyRegime.small, child: Text('Pequeña Empresa', style: TextStyle(fontSize: 14))),
+                    DropdownMenuItem(value: CompanyRegime.micro, child: Text('Microempresa', style: TextStyle(fontSize: 14))),
+                    DropdownMenuItem(value: CompanyRegime.intern, child: Text('Practicante', style: TextStyle(fontSize: 14))),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) notifier.updateRegime(val);
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Sueldo Bruto ──
+            const Text('Sueldo Bruto Mensual (S/)', style: TextStyle(color: primaryBlue, fontSize: 14, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            TextFormField(
+              initialValue: data.grossSalary == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.grossSalary),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
+              style: const TextStyle(fontSize: 16, color: textDark),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: lightBlueBg,
+                hintText: 'Ingresa tu sueldo bruto',
+                prefixText: 'S/ ',
+                prefixStyle: const TextStyle(color: textDark, fontSize: 16),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: borderColor)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
+              ),
+              onChanged: (v) => notifier.updateGrossSalary(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
+            ),
+            const SizedBox(height: 20),
+
             // ── Fechas ──
             const Text('Fecha de inicio', style: TextStyle(color: textDark, fontSize: 14)),
             const SizedBox(height: 8),
@@ -277,28 +336,6 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
             ),
             const SizedBox(height: 20),
 
-            // ── Sueldo Bruto ──
-            const Text('Sueldo Bruto Mensual (S/)', style: TextStyle(color: primaryBlue, fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            TextFormField(
-              initialValue: data.grossSalary == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.grossSalary),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
-              style: const TextStyle(fontSize: 16, color: textDark),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: lightBlueBg,
-                hintText: 'Ingresa tu sueldo bruto',
-                prefixText: 'S/ ',
-                prefixStyle: const TextStyle(color: textDark, fontSize: 16),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: borderColor)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
-              ),
-              onChanged: (v) => notifier.updateGrossSalary(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
-            ),
-            const SizedBox(height: 20),
-
             // ── ¿Tiene hijos? ──
             const Text('¿Tienes hijos? (Asignación Familiar)', style: TextStyle(fontSize: 14, color: textDark)),
             const SizedBox(height: 8),
@@ -325,40 +362,6 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                       groupValue: data.hasFamilyAllowance,
                       activeColor: primaryBlue,
                       onChanged: (val) => notifier.updateHasFamilyAllowance(val ?? false),
-                    ),
-                    const Text('No', style: TextStyle(color: textDark)),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // ── ¿Recibió CTS anterior? ──
-            const Text('¿Ya recibiste tu último depósito de CTS?', style: TextStyle(fontSize: 14, color: textDark)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Radio<bool>(
-                      value: true,
-                      groupValue: data.hasReceivedLastCts,
-                      activeColor: primaryBlue,
-                      onChanged: (val) => notifier.updateHasReceivedLastCts(val ?? true),
-                    ),
-                    const Text('Sí', style: TextStyle(color: textDark)),
-                  ],
-                ),
-                const SizedBox(width: 24),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Radio<bool>(
-                      value: false,
-                      groupValue: data.hasReceivedLastCts,
-                      activeColor: primaryBlue,
-                      onChanged: (val) => notifier.updateHasReceivedLastCts(val ?? false),
                     ),
                     const Text('No', style: TextStyle(color: textDark)),
                   ],
@@ -451,6 +454,7 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                       activeColor: primaryBlue,
                       onChanged: (val) {
                         notifier.updateOvertimeMeetRegularity(val ?? false);
+                        // Al marcar "No", limpiar la suma histórica (promedio → 0)
                         notifier.updateSemesterTotalOvertime(0);
                       },
                     ),
@@ -459,57 +463,88 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                 ),
               ],
             ),
+            // Campo condicional: suma histórica del semestre (excluye mes de cese)
             if (data.overtimeMeetRegularity == true) ...[
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      initialValue: data.semesterTotalOvertime == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.semesterTotalOvertime),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
-                      style: const TextStyle(fontSize: 16, color: textDark),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: 'Monto total en el semestre (S/)',
-                        prefixText: 'S/ ',
-                        prefixStyle: const TextStyle(color: textDark, fontSize: 16),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
-                      ),
-                      onChanged: (v) => notifier.updateSemesterTotalOvertime(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
-                    ),
-                  ),
+              const Text(
+                'Suma de HH.EE. de meses anteriores del semestre (excl. mes de cese)',
+                style: TextStyle(fontSize: 13, color: Color(0xFF475569)),
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                key: const ValueKey('semesterTotalOvertime'),
+                initialValue: data.semesterTotalOvertime == 0
+                    ? ''
+                    : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)
+                        .formatDouble(data.semesterTotalOvertime),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.deny(RegExp(r'-')),
+                  CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2),
                 ],
+                style: const TextStyle(fontSize: 16, color: textDark),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'S/ 0.00 — suma total de los meses previos',
+                  prefixText: 'S/ ',
+                  prefixStyle: const TextStyle(color: textDark, fontSize: 16),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: primaryBlue, width: 1.5),
+                  ),
+                ),
+                onChanged: (v) => notifier.updateSemesterTotalOvertime(
+                  double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0,
+                ),
               ),
               const SizedBox(height: 16),
             ],
-            
-            // ── Bonos Pendientes (Liquidación) ──
-            const Text('Bonos pendientes a pagar (opcional)', style: TextStyle(color: textDark, fontSize: 14)),
-            const SizedBox(height: 8),
+            // Campo siempre visible: horas extra del mes de cese
+            const Text(
+              'Horas extra del mes de cese (ingreso directo, S/)',
+              style: TextStyle(fontSize: 14, color: textDark),
+            ),
+            const SizedBox(height: 6),
             TextFormField(
-              initialValue: data.pendingBonuses == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.pendingBonuses),
+              key: const ValueKey('currentMonthOvertime'),
+              initialValue: data.currentMonthOvertime == 0
+                  ? ''
+                  : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)
+                      .formatDouble(data.currentMonthOvertime),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
+              inputFormatters: [
+                FilteringTextInputFormatter.deny(RegExp(r'-')),
+                CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2),
+              ],
               style: const TextStyle(fontSize: 16, color: textDark),
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white,
-                hintText: 'Monto a pagar (S/)',
+                hintText: 'S/ 0.00 — dejar en 0 si no hubo HH.EE. este mes',
                 prefixText: 'S/ ',
                 prefixStyle: const TextStyle(color: textDark, fontSize: 16),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: primaryBlue, width: 1.5),
+                ),
               ),
-              onChanged: (val) => notifier.updatePendingBonuses(double.tryParse(val.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0),
+              onChanged: (v) => notifier.updateCurrentMonthOvertime(
+                double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0,
+              ),
             ),
-            const SizedBox(height: 24),
-
-            // ── Caja Gris: Condiciones Laborales ──
+            const SizedBox(height: 16),
+            // ── Caja Gris: Sistema de Pensión y Salud ──
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -525,46 +560,14 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                       const Icon(Icons.work_outline_rounded, size: 16, color: Color(0xFF64748B)),
                       const SizedBox(width: 8),
                       const Text(
-                        'Condiciones Laborales',
+                        'Sistema de Pensión y Salud',
                         style: TextStyle(fontSize: 14, color: Color(0xFF475569), fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   
-                  const Text('Régimen Laboral', style: TextStyle(fontSize: 12, color: Color(0xFF475569))),
-                  const SizedBox(height: 4),
-                  Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<CompanyRegime>(
-                        value: data.regime,
-                        hint: const Text('Seleccionar', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
-                        isExpanded: true,
-                        icon: const Padding(
-                          padding: EdgeInsets.only(right: 12),
-                          child: Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        items: const [
-                          DropdownMenuItem(value: CompanyRegime.general, child: Text('General', style: TextStyle(fontSize: 14))),
-                          DropdownMenuItem(value: CompanyRegime.small, child: Text('Pequeña Empresa', style: TextStyle(fontSize: 14))),
-                          DropdownMenuItem(value: CompanyRegime.micro, child: Text('Microempresa', style: TextStyle(fontSize: 14))),
-                          DropdownMenuItem(value: CompanyRegime.intern, child: Text('Practicante', style: TextStyle(fontSize: 14))),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) notifier.updateRegime(val);
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
+                  
                   const Text('Seguro de Salud', style: TextStyle(fontSize: 12, color: Color(0xFF475569))),
                   const SizedBox(height: 4),
                   Container(
@@ -670,6 +673,86 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
               ),
             ),
             const SizedBox(height: 32),
+
+            // ── ¿Ha gozado vacaciones? ──
+            const Text('¿Ha gozado de días de descanso vacacional desde que ingresó a la empresa?', style: TextStyle(fontSize: 14, color: textDark)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Radio<bool>(
+                      value: true,
+                      groupValue: data.hasTakenVacations,
+                      activeColor: primaryBlue,
+                      onChanged: (val) => notifier.updateHasTakenVacations(val ?? true),
+                    ),
+                    const Text('Sí', style: TextStyle(color: textDark)),
+                  ],
+                ),
+                const SizedBox(width: 24),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Radio<bool>(
+                      value: false,
+                      groupValue: data.hasTakenVacations,
+                      activeColor: primaryBlue,
+                      onChanged: (val) {
+                        if (val != null) {
+                          notifier.updateHasTakenVacations(val);
+                          notifier.updateTakenVacationDays(0);
+                        }
+                      },
+                    ),
+                    const Text('No', style: TextStyle(color: textDark)),
+                  ],
+                ),
+              ],
+            ),
+            if (data.hasTakenVacations == true) ...[
+              const SizedBox(height: 16),
+              const Text('Indique el número total de días de vacaciones que ya se tomó en toda su relación laboral:', style: TextStyle(color: textDark, fontSize: 14)),
+              const SizedBox(height: 8),
+              TextFormField(
+                keyboardType: TextInputType.number,
+                initialValue: data.takenVacationDays == 0 ? '' : data.takenVacationDays.toString(),
+                decoration: InputDecoration(
+                  hintText: 'Ej. 15',
+                  hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
+                ),
+                onChanged: (val) => notifier.updateTakenVacationDays(int.tryParse(val) ?? 0),
+              ),
+            ],
+            const SizedBox(height: 16),
+
+            // ── Bonos Pendientes (Liquidación) ──
+            const Text('Bonos pendientes a pagar (opcional)', style: TextStyle(color: textDark, fontSize: 14)),
+            const SizedBox(height: 8),
+            TextFormField(
+              initialValue: data.pendingBonuses == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.pendingBonuses),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
+              style: const TextStyle(fontSize: 16, color: textDark),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                hintText: 'Monto a pagar (S/)',
+                prefixText: 'S/ ',
+                prefixStyle: const TextStyle(color: textDark, fontSize: 16),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
+              ),
+              onChanged: (val) => notifier.updatePendingBonuses(double.tryParse(val.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0),
+            ),
+            const SizedBox(height: 24),
 
             // ── Botón Calcular ──
             SizedBox(

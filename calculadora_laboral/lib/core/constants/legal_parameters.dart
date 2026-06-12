@@ -49,25 +49,25 @@ abstract final class LegalParameters {
   static const Map<AfpType, AfpCommission> kAfpCommissions = {
     AfpType.prima: AfpCommission(
       name: 'AFP Prima',
-      flujoRate: 0.0,      // Unificado
-      mixtaFlujoRate: 0.0, // Unificado
-      primaSeguoRate: 0.0137, // 1.37% prima + 10% fondo = 11.37%
+      flujoRate: 0.0160,      // 1.60% comisión sobre flujo (SBS 2025-2026)
+      mixtaFlujoRate: 0.0,   // Componente flujo de mixta eliminado desde feb-2023
+      primaSeguoRate: 0.0137, // 1.37% prima seguro de invalidez
     ),
     AfpType.integra: AfpCommission(
       name: 'AFP Integra',
-      flujoRate: 0.0,
+      flujoRate: 0.0155,      // 1.55% comisión sobre flujo
       mixtaFlujoRate: 0.0,
       primaSeguoRate: 0.0137,
     ),
     AfpType.profuturo: AfpCommission(
       name: 'AFP Profuturo',
-      flujoRate: 0.0,
+      flujoRate: 0.0169,      // 1.69% comisión sobre flujo
       mixtaFlujoRate: 0.0,
       primaSeguoRate: 0.0137,
     ),
     AfpType.habitat: AfpCommission(
       name: 'AFP Habitat',
-      flujoRate: 0.0,
+      flujoRate: 0.0147,      // 1.47% comisión sobre flujo
       mixtaFlujoRate: 0.0,
       primaSeguoRate: 0.0137,
     ),

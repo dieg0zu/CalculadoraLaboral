@@ -21,8 +21,12 @@ class LiquidationDataNotifier extends StateNotifier<EmployeeData> {
     state = state.copyWith(endDate: date);
   }
 
-  void updateHasReceivedLastCts(bool hasReceived) {
-    state = state.copyWith(hasReceivedLastCts: hasReceived);
+  void updateHasTakenVacations(bool hasTaken) {
+    state = state.copyWith(hasTakenVacations: hasTaken);
+  }
+
+  void updateTakenVacationDays(int days) {
+    state = state.copyWith(takenVacationDays: days);
   }
 
   void updateRegime(CompanyRegime regime) {
@@ -68,6 +72,10 @@ class LiquidationDataNotifier extends StateNotifier<EmployeeData> {
 
   void updateSemesterTotalOvertime(double amount) {
     state = state.copyWith(semesterTotalOvertime: amount);
+  }
+
+  void updateCurrentMonthOvertime(double amount) {
+    state = state.copyWith(currentMonthOvertime: amount);
   }
 
   void updateOvertimeMeetRegularity(bool meets) {
