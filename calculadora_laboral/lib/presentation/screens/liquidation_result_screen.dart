@@ -90,19 +90,19 @@ class LiquidationResultScreen extends StatelessWidget {
                 children: [
                   if (result.netPendingSalary > 0)
                     _buildDetailRow('Sueldo del mes de cese', result.netPendingSalary),
+                  if (result.currentMonthOvertimeResult > 0)
+                    _buildDetailRow('HH.EE. del mes de cese', result.currentMonthOvertimeResult),
                   if (result.netGratification > 0)
                     _buildDetailRow('Gratificación Trunca + Bono', result.netGratification),
                   if (result.netCtsInLiquidation > 0)
                     _buildDetailRow('CTS Trunca', result.netCtsInLiquidation),
                   if (result.netVacations > 0)
                     _buildDetailRow('Vacaciones no gozadas', result.netVacations),
-                  if (result.extraPayments > 0)
-                    _buildDetailRow('Otros pagos pendientes', result.extraPayments),
                   // Retención pensionaria centralizada (AFP/ONP)
                   if (result.pensionDeduction > 0) ...[
                     const Divider(color: Colors.white24, height: 24),
                     _buildDeductionRow(
-                      'Retención AFP/ONP (sueldo + vacaciones + otros)',
+                      'Retención AFP/ONP (sueldo + HH.EE. + vacaciones)',
                       result.pensionDeduction,
                     ),
                   ],

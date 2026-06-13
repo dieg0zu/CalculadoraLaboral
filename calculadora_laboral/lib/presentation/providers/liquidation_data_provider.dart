@@ -96,6 +96,10 @@ class LiquidationDataNotifier extends StateNotifier<EmployeeData> {
   void updatePendingBonuses(double amount) {
     state = state.copyWith(pendingBonuses: amount);
   }
+
+  void updateIsCurrentMonthSalaryAlreadyPaid(bool alreadyPaid) {
+    state = state.copyWith(isCurrentMonthSalaryAlreadyPaid: alreadyPaid);
+  }
 }
 
 final liquidationDataProvider = StateNotifierProvider<LiquidationDataNotifier, EmployeeData>((ref) {

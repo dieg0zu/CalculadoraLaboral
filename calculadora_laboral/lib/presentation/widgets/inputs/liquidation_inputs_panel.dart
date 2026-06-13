@@ -287,6 +287,43 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
               ),
               onChanged: (v) => notifier.updateGrossSalary(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
             ),
+            const SizedBox(height: 12),
+
+            // ── Flag: ¿Sueldo del mes de cese ya pagado? ──────────────────
+            // Resuelve el punto ciego de fin de mes: si la planilla normal
+            // ya incluyó el sueldo de los días trabajados en el mes de cese,
+            // activar este switch evita duplicarlo en la liquidación.
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                color: data.isCurrentMonthSalaryAlreadyPaid
+                    ? const Color(0xFFFFF8E1)  // ámbar suave cuando activo
+                    : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: data.isCurrentMonthSalaryAlreadyPaid
+                      ? const Color(0xFFFFB300)
+                      : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                activeColor: const Color(0xFFFFB300),
+                title: const Text(
+                  'Sueldo del mes de cese ya pagado en planilla',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textDark),
+                ),
+                subtitle: Text(
+                  data.isCurrentMonthSalaryAlreadyPaid
+                      ? 'Activado → la línea "Sueldo mes de cese" mostrará S/ 0.00'
+                      : 'Desactivado → se calculará proporcional a los días trabajados',
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                ),
+                value: data.isCurrentMonthSalaryAlreadyPaid,
+                onChanged: (val) =>
+                    notifier.updateIsCurrentMonthSalaryAlreadyPaid(val),
+              ),
+            ),
             const SizedBox(height: 20),
 
             // ── Fechas ──

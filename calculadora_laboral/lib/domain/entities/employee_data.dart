@@ -94,6 +94,14 @@ class EmployeeData {
   /// Mes de cálculo (1–12) para determinar semestre de gratificación
   final int currentMonth;
 
+  /// Flag: ¿El sueldo del mes de cese ya fue abonado mediante la planilla normal?
+  ///
+  /// - [false] (default): el sueldo proporcional se incluye en la liquidación.
+  ///   Fórmula: (baseSalary / 30) × diasTrabajadosMesCese
+  /// - [true]:  el sueldo ya fue pagado; la línea «Sueldo del mes de cese» muestra
+  ///   S/ 0.00 y no se suma al totalizador, evitando duplicación.
+  final bool isCurrentMonthSalaryAlreadyPaid;
+
   const EmployeeData({
     this.grossSalary = 0.0,
     this.hasFamilyAllowance,
@@ -124,6 +132,7 @@ class EmployeeData {
     this.pendingBonuses = 0.0,
     this.hasLastGratification,
     this.lastGratificationAmount = 0.0,
+    this.isCurrentMonthSalaryAlreadyPaid = false,
   });
 
   EmployeeData copyWith({
@@ -156,6 +165,7 @@ class EmployeeData {
     double? pendingBonuses,
     bool? hasLastGratification,
     double? lastGratificationAmount,
+    bool? isCurrentMonthSalaryAlreadyPaid,
     bool clearPensionSystem = false,
     bool clearAfpType = false,
     bool clearCommissionType = false,
@@ -190,6 +200,8 @@ class EmployeeData {
       pendingBonuses: pendingBonuses ?? this.pendingBonuses,
       hasLastGratification: hasLastGratification ?? this.hasLastGratification,
       lastGratificationAmount: lastGratificationAmount ?? this.lastGratificationAmount,
+      isCurrentMonthSalaryAlreadyPaid:
+          isCurrentMonthSalaryAlreadyPaid ?? this.isCurrentMonthSalaryAlreadyPaid,
     );
   }
 
@@ -221,7 +233,8 @@ class EmployeeData {
           semesterTotalOvertime == other.semesterTotalOvertime &&
           currentMonthOvertime == other.currentMonthOvertime &&
           hasLastGratification == other.hasLastGratification &&
-          lastGratificationAmount == other.lastGratificationAmount;
+          lastGratificationAmount == other.lastGratificationAmount &&
+          isCurrentMonthSalaryAlreadyPaid == other.isCurrentMonthSalaryAlreadyPaid;
 
   @override
   int get hashCode => Object.hashAll([
@@ -250,5 +263,6 @@ class EmployeeData {
         currentMonthOvertime,
         hasLastGratification,
         lastGratificationAmount,
+        isCurrentMonthSalaryAlreadyPaid,
       ]);
 }
