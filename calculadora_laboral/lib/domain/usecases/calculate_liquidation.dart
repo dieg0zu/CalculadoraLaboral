@@ -68,6 +68,9 @@ final class CalculateLiquidationUseCase {
     final bool hasFamily      = data.hasFamilyAllowance == true;
     final double familyAmt    = hasFamily ? LegalParameters.kFamilyAllowance : 0.0;
 
+    // 1. Base Remunerativa General (Sueldo Básico + Asignación Familiar si corresponde)
+    final double baseRemunerativa = baseSalary + familyAmt;
+
     final bool isMype         = data.regime == CompanyRegime.small ||
                                 data.regime == CompanyRegime.micro ||
                                 data.regime == CompanyRegime.intern;
@@ -95,16 +98,13 @@ final class CalculateLiquidationUseCase {
     // Ingreso directo del mes de cese — SÍ va al totalizador y a la base AFP/ONP
     final double curMonthOT   = data.currentMonthOvertime;
 
-    // ── RCB (base para gratificación, no es ingreso directo) ─────────────────
-    final double rcb = baseSalary + familyAmt + overtimeAvg + bonusesAvg;
-
     // ═════════════════════════════════════════════════════════════════════════
     // FUNCIÓN 1: Sueldo del Mes de Cese
     //
     //   if (isCurrentMonthSalaryAlreadyPaid) {
     //     return 0.00   ← ya pagado en planilla normal; no se duplica
     //   } else {
-    //     return (baseSalary / 30) × diasTrabajadosMesCese
+    //     return (baseRemunerativa / 30) × diasTrabajadosMesCese
     //   }
     //
     // diasTrabajadosMesCese = 0  cuando endDate < inicioMesCese (caso borde)
@@ -117,17 +117,14 @@ final class CalculateLiquidationUseCase {
         : endDate.difference(desdeMesCese).inDays + 1;
 
     final double netPendingSalary = data.isCurrentMonthSalaryAlreadyPaid
-        ? 0.0                                   // ← ya pagado; excluir de liquidación
-        : (baseSalary / 30) * diasMesCese;      // ← proporcional a los días trabajados
+        ? 0.0                                         // ← ya pagado; excluir de liquidación
+        : (baseRemunerativa / 30) * diasMesCese;      // ← proporcional a los días trabajados
 
     // ═════════════════════════════════════════════════════════════════════════
     // FUNCIÓN 2: Gratificación Trunca
-    //   brutoGrati  = (RCB / 6) × mesesCompletosSemestre
+    //   brutoGrati  = ((baseRemunerativa + overtimeAverage) / 6) × mesesTotalesConFraccion
     //   bonoGrati   = brutoGrati × bonoRate  (aplicado de forma independiente)
     //   netGrati    = brutoGrati + bonoGrati
-    //
-    // "Mes completo" = el trabajador laboró desde el 1° hasta el último día
-    // del mes dentro del semestre corriente (Ene-Jun para julio; Jul-Dic para dic).
     // ═════════════════════════════════════════════════════════════════════════
     final DateTime gratPeriodStart = endDate.month <= 6
         ? DateTime(endDate.year, 1, 1)
@@ -136,9 +133,12 @@ final class CalculateLiquidationUseCase {
         ? startDate
         : gratPeriodStart;
 
-    final int mesesCompletosGrati = _mesesCompletos(gratCompStart, endDate);
+    final int diasGrati = endDate.isBefore(gratCompStart)
+        ? 0
+        : endDate.difference(gratCompStart).inDays + 1;
+    final double mesesTotalesConFraccionGrati = diasGrati / 30.0;
 
-    final double brutoGrati = (rcb / 6) * mesesCompletosGrati;
+    final double brutoGrati = ((baseRemunerativa + overtimeAvg + bonusesAvg) / 6) * mesesTotalesConFraccionGrati;
 
     final double bonoRate = switch (data.healthInsurance) {
       HealthInsurance.eps || HealthInsurance.both => LegalParameters.kGratBonifEpsRate,
@@ -151,13 +151,10 @@ final class CalculateLiquidationUseCase {
 
     // ═════════════════════════════════════════════════════════════════════════
     // FUNCIÓN 3: CTS Trunca
-    //   Base Computable CTS = baseSalary + (baseSalary / 6) + familyAmt + variablesAvg
+    //   Base Computable CTS = baseRemunerativa + (baseRemunerativa / 6) + variablesAvg
     //     └─ El 1/6 representa la gratificación ordinaria (Art. 9, D.Leg. 650)
-    //   mesesProporcionales = diasCeseCts / 30  (puede ser fraccionario)
-    //   netCTS = (baseComputableCTS / 12) × mesesProporcionales
-    //
-    // Equivalencia directa:  (baseComputableCTS / 12) × (d/30) = (baseComputableCTS / 360) × d
-    // Periodos: May 1–Oct 31 ó Nov 1–Abr 30
+    //   mesesTotalesConFraccion = diasCeseCts / 30
+    //   netCTS = (baseComputableCTS / 12) × mesesTotalesConFraccion
     // ═════════════════════════════════════════════════════════════════════════
     final DateTime ctsPeriodStart = (endDate.month >= 5 && endDate.month <= 10)
         ? DateTime(endDate.year, 5, 1)
@@ -170,32 +167,28 @@ final class CalculateLiquidationUseCase {
         ? 0
         : endDate.difference(ctsCompStart).inDays + 1;
 
-    // Base computable CTS incluye 1/6 de la gratificación ordinaria
+    // Base computable CTS incluye 1/6 de la gratificación ordinaria y la asignación familiar en baseRemunerativa
     final double baseComputableCTS =
-        baseSalary + (baseSalary / 6) + familyAmt + overtimeAvg + bonusesAvg;
-    final double mesesPropCTS = diasCeseCts / 30.0;
-    double netCtsInLiquidation = (baseComputableCTS / 12) * mesesPropCTS;
+        baseRemunerativa + (baseRemunerativa / 6) + overtimeAvg + bonusesAvg;
+    final double mesesTotalesConFraccionCTS = diasCeseCts / 30.0;
+    double netCtsInLiquidation = (baseComputableCTS / 12) * mesesTotalesConFraccionCTS;
     if (isMype) netCtsInLiquidation /= 2;
 
     // ═════════════════════════════════════════════════════════════════════════
     // FUNCIÓN 4: Vacaciones Truncas
-    //   netVacations = (baseSalary / vacDivisor) × mesesEquivalentes
+    //   netVacations = (baseRemunerativa / vacDivisor) × mesesTotalesConFraccion
     //
     // Desarrollo de la equivalencia:
     //   diasVacGanados = totalDiasRelacion × tasaVac        (vacaciones acumuladas)
     //   diasVacPorPagar = ceil(max(0, diasVacGanados − diasGozados))
     //
-    //   El resultado correcto es: (baseSalary / 30) × diasVacPorPagar
+    //   El resultado correcto es: (baseRemunerativa / 30) × diasVacPorPagar
     //   Expresado en notación mensual:
     //     vacDivisor = 12 (general, 30 días vac/año → 1 mes sueldo/año)
     //     vacDivisor = 24 (MYPE,    15 días vac/año → 0.5 mes sueldo/año)
     //
-    //   Para que (baseSalary / vacDivisor) × mesesEquivalentes = (baseSalary / 30) × dias:
-    //     mesesEquivalentes = diasVacPorPagar × vacDivisor / 30
-    //
-    //   Ejemplo régimen general: dias=8, vacDivisor=12
-    //     mesesEquiv = 8 × 12 / 30 = 3.2
-    //     netVac = (1220/12) × 3.2 = 325.33 ✓  = (1220/30) × 8 = 325.33 ✓
+    //   Para que (baseRemunerativa / vacDivisor) × mesesTotalesConFraccion = (baseRemunerativa / 30) × dias:
+    //     mesesTotalesConFraccion = diasVacPorPagar × vacDivisor / 30
     //
     // El ceil protege al trabajador ante fracciones (días parciales).
     // ═════════════════════════════════════════════════════════════════════════
@@ -213,12 +206,12 @@ final class CalculateLiquidationUseCase {
     //   12 → general (30 días/año = 1 mes sueldo)
     //   24 → MYPE    (15 días/año = 0.5 mes sueldo)
     final double vacDivisor = isMype ? 24.0 : 12.0;
-    // mesesEquivalentes calibrado para que la fórmula mensual = la fórmula diaria
-    final double mesesEquivalentes = diasVacPorPagar * vacDivisor / 30.0;
+    // mesesTotalesConFraccion calibrado para que la fórmula mensual = la fórmula diaria
+    final double mesesTotalesConFraccionVac = diasVacPorPagar * vacDivisor / 30.0;
 
-    final double netVacations = (baseSalary / vacDivisor) * mesesEquivalentes;
-    // Verificación: (baseSalary / vacDivisor) × (diasVacPorPagar × vacDivisor / 30)
-    //             = (baseSalary / 30) × diasVacPorPagar  ✓
+    final double netVacations = (baseRemunerativa / vacDivisor) * mesesTotalesConFraccionVac;
+    // Verificación: (baseRemunerativa / vacDivisor) × (diasVacPorPagar × vacDivisor / 30)
+    //             = (baseRemunerativa / 30) × diasVacPorPagar  ✓
 
     // ═════════════════════════════════════════════════════════════════════════
     // FUNCIÓN 5: Retención Pensionaria (AFP / ONP)
@@ -262,42 +255,5 @@ final class CalculateLiquidationUseCase {
       pensionDeduction:           pensionDeduction,
       totalToPay:                 totalToPay,
     );
-  }
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // Helper: cuenta los meses calendario COMPLETOS en el rango [compStart, endDate].
-  //
-  // Un mes se considera "completo" si el trabajador estuvo presente desde el
-  // primer día hasta el último día de ese mes dentro del periodo evaluado.
-  // ───────────────────────────────────────────────────────────────────────────
-  static int _mesesCompletos(DateTime compStart, DateTime endDate) {
-    int count = 0;
-    DateTime mes = DateTime(compStart.year, compStart.month, 1);
-    final mesLimite = DateTime(endDate.year, endDate.month, 1);
-
-    while (!mes.isAfter(mesLimite)) {
-      final ultimoDia = DateTime(mes.year, mes.month + 1, 0).day;
-
-      // El trabajador cubre el primer día del mes si:
-      //   (a) compStart es anterior al mes, o
-      //   (b) compStart es exactamente el día 1 del mes
-      final bool cubrePrimerDia = compStart.isBefore(mes) ||
-          (compStart.year  == mes.year  &&
-           compStart.month == mes.month &&
-           compStart.day   == 1);
-
-      // El trabajador cubre el último día si:
-      //   (a) endDate es posterior al mes, o
-      //   (b) endDate cae en el último día del mes
-      final bool cubreUltimoDia =
-          endDate.isAfter(DateTime(mes.year, mes.month, ultimoDia)) ||
-          (endDate.year  == mes.year  &&
-           endDate.month == mes.month &&
-           endDate.day   >= ultimoDia);
-
-      if (cubrePrimerDia && cubreUltimoDia) count++;
-      mes = DateTime(mes.year, mes.month + 1, 1);
-    }
-    return count;
   }
 }
