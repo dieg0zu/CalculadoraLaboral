@@ -27,6 +27,12 @@ class LiquidationResult {
   /// Gratificación y CTS están exoneradas.
   final double pensionDeduction;
 
+  /// Deducción EPS.
+  final double epsDeduction;
+
+  /// Otras deducciones.
+  final double otherDeductions;
+
   /// Neto a recibir = netPendingSalary + currentMonthOvertimeResult
   ///               + netGratification + netCtsInLiquidation + netVacations
   ///               − pensionDeduction
@@ -43,6 +49,8 @@ class LiquidationResult {
     required this.netPendingSalary,
     required this.currentMonthOvertimeResult,
     required this.pensionDeduction,
+    required this.epsDeduction,
+    required this.otherDeductions,
     required this.totalToPay,
   });
 }

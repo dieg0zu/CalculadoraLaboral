@@ -21,19 +21,27 @@ class LiquidationInputsPanel extends ConsumerStatefulWidget {
 class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel> {
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
+  late TextEditingController _epsCostController;
 
   final _startDateMaskFormatter = DateTextFormatter();
   
   final _endDateMaskFormatter = DateTextFormatter();
 
-
   DateTime? _startDate;
   DateTime? _endDate;
+  bool? _hasCurrentMonthOvertime;
+
+  @override
+  void initState() {
+    super.initState();
+    _epsCostController = TextEditingController();
+  }
 
   @override
   void dispose() {
     _startDateController.dispose();
     _endDateController.dispose();
+    _epsCostController.dispose();
     super.dispose();
   }
 
@@ -179,7 +187,20 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
       );
       return;
     }
+
+    if (_hasCurrentMonthOvertime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, indica si hiciste horas extras en el mes de cese.')),
+      );
+      return;
+    }
     
+    if (_hasCurrentMonthOvertime == true && data.currentMonthOvertime <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, ingresa el monto de horas extras del mes de cese.')),
+      );
+      return;
+    }
 
 
     if (data.healthInsurance == null) {
@@ -542,45 +563,83 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
               ),
               const SizedBox(height: 16),
             ],
-            // Campo siempre visible: horas extra del mes de cese
+            
             const Text(
-              'Horas extra del mes de cese (ingreso directo, S/)',
+              '¿Hizo horas extra en el mes del cese?',
               style: TextStyle(fontSize: 14, color: textDark),
             ),
-            const SizedBox(height: 6),
-            TextFormField(
-              key: const ValueKey('currentMonthOvertime'),
-              initialValue: data.currentMonthOvertime == 0
-                  ? ''
-                  : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)
-                      .formatDouble(data.currentMonthOvertime),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.deny(RegExp(r'-')),
-                CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Radio<bool>(
+                      value: true,
+                      groupValue: _hasCurrentMonthOvertime,
+                      activeColor: primaryBlue,
+                      onChanged: (val) {
+                        setState(() => _hasCurrentMonthOvertime = true);
+                      },
+                    ),
+                    const Text('Sí', style: TextStyle(color: textDark)),
+                  ],
+                ),
+                const SizedBox(width: 24),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Radio<bool>(
+                      value: false,
+                      groupValue: _hasCurrentMonthOvertime,
+                      activeColor: primaryBlue,
+                      onChanged: (val) {
+                        setState(() => _hasCurrentMonthOvertime = false);
+                        notifier.updateCurrentMonthOvertime(0);
+                      },
+                    ),
+                    const Text('No', style: TextStyle(color: textDark)),
+                  ],
+                ),
               ],
-              style: const TextStyle(fontSize: 16, color: textDark),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                hintText: 'S/ 0.00 — dejar en 0 si no hubo HH.EE. este mes',
-                prefixText: 'S/ ',
-                prefixStyle: const TextStyle(color: textDark, fontSize: 16),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: primaryBlue, width: 1.5),
-                ),
-              ),
-              onChanged: (v) => notifier.updateCurrentMonthOvertime(
-                double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0,
-              ),
             ),
-            const SizedBox(height: 16),
+            if (_hasCurrentMonthOvertime == true) ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const ValueKey('currentMonthOvertime'),
+                initialValue: data.currentMonthOvertime == 0
+                    ? ''
+                    : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)
+                        .formatDouble(data.currentMonthOvertime),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.deny(RegExp(r'-')),
+                  CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2),
+                ],
+                style: const TextStyle(fontSize: 16, color: textDark),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'Ingrese el monto en soles',
+                  prefixText: 'S/ ',
+                  prefixStyle: const TextStyle(color: textDark, fontSize: 16),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: primaryBlue, width: 1.5),
+                  ),
+                ),
+                onChanged: (v) => notifier.updateCurrentMonthOvertime(
+                  double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0,
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+            
             // ── Caja Gris: Sistema de Pensión y Salud ──
             Container(
               padding: const EdgeInsets.all(16),
@@ -630,7 +689,13 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                           DropdownMenuItem(value: HealthInsurance.sis, child: Text('Ambos (EPS + EsSalud)', style: TextStyle(fontSize: 14))),
                         ],
                         onChanged: (val) {
-                          if (val != null) notifier.updateHealthInsurance(val);
+                          if (val != null) {
+                            notifier.updateHealthInsurance(val);
+                            if (val == HealthInsurance.essalud) {
+                              notifier.updateEpsCost(0);
+                              _epsCostController.text = '';
+                            }
+                          }
                         },
                       ),
                     ),
@@ -767,29 +832,7 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                 onChanged: (val) => notifier.updateTakenVacationDays(int.tryParse(val) ?? 0),
               ),
             ],
-            const SizedBox(height: 16),
-
-            // ── Bonos Pendientes (Liquidación) ──
-            const Text('Bonos pendientes a pagar (opcional)', style: TextStyle(color: textDark, fontSize: 14)),
-            const SizedBox(height: 8),
-            TextFormField(
-              initialValue: data.pendingBonuses == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.pendingBonuses),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
-              style: const TextStyle(fontSize: 16, color: textDark),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                hintText: 'Monto a pagar (S/)',
-                prefixText: 'S/ ',
-                prefixStyle: const TextStyle(color: textDark, fontSize: 16),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
-              ),
-              onChanged: (val) => notifier.updatePendingBonuses(double.tryParse(val.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
             // ── Botón Calcular ──
             SizedBox(

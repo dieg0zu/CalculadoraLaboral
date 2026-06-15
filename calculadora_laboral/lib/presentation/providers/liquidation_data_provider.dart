@@ -58,6 +58,14 @@ class LiquidationDataNotifier extends StateNotifier<EmployeeData> {
     state = state.copyWith(healthInsurance: insurance);
   }
 
+  void updateEpsCost(double cost) {
+    state = state.copyWith(epsCost: cost.clamp(0, 999999));
+  }
+
+  void updateOtherDeductions(double amount) {
+    state = state.copyWith(otherDeductions: amount.clamp(0, 999999));
+  }
+
   void updateBonusesMeetRegularity(bool meets) {
     state = state.copyWith(bonusesMeetRegularity: meets);
   }

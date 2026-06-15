@@ -55,6 +55,8 @@ final class CalculateLiquidationUseCase {
         netPendingSalary:          0,
         currentMonthOvertimeResult: 0,
         pensionDeduction:          0,
+        epsDeduction:              0,
+        otherDeductions:           0,
         totalToPay:                0,
       );
     }
@@ -159,12 +161,19 @@ final class CalculateLiquidationUseCase {
         ? _pension(data, basePension).totalRetention
         : 0.0;
 
+    final bool hasEps = data.healthInsurance == HealthInsurance.eps || data.healthInsurance == HealthInsurance.both;
+    final double epsDeduction = hasEps ? data.epsCost : 0.0;
+
+    final double otrasDeducciones = data.otherDeductions;
+
     final double totalToPay = netPendingSalary
         + horasExtraMes
         + gratificacionTrunca
         + ctsTrunca
         + vacacionesTruncas
-        - pensionDeduction;
+        - pensionDeduction
+        - epsDeduction
+        - otrasDeducciones;
 
     return LiquidationResult(
       netGratification:           gratificacionTrunca,
@@ -174,6 +183,8 @@ final class CalculateLiquidationUseCase {
       netPendingSalary:           netPendingSalary,
       currentMonthOvertimeResult: horasExtraMes,
       pensionDeduction:           pensionDeduction,
+      epsDeduction:               epsDeduction,
+      otherDeductions:            otrasDeducciones,
       totalToPay:                 totalToPay,
     );
   }

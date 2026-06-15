@@ -102,6 +102,9 @@ class EmployeeData {
   ///   S/ 0.00 y no se suma al totalizador, evitando duplicación.
   final bool isCurrentMonthSalaryAlreadyPaid;
 
+  /// Otras deducciones manuales al cese (préstamos, adelantos, etc.)
+  final double otherDeductions;
+
   const EmployeeData({
     this.grossSalary = 0.0,
     this.hasFamilyAllowance,
@@ -133,6 +136,7 @@ class EmployeeData {
     this.hasLastGratification,
     this.lastGratificationAmount = 0.0,
     this.isCurrentMonthSalaryAlreadyPaid = false,
+    this.otherDeductions = 0.0,
   });
 
   EmployeeData copyWith({
@@ -166,6 +170,7 @@ class EmployeeData {
     bool? hasLastGratification,
     double? lastGratificationAmount,
     bool? isCurrentMonthSalaryAlreadyPaid,
+    double? otherDeductions,
     bool clearPensionSystem = false,
     bool clearAfpType = false,
     bool clearCommissionType = false,
@@ -202,6 +207,7 @@ class EmployeeData {
       lastGratificationAmount: lastGratificationAmount ?? this.lastGratificationAmount,
       isCurrentMonthSalaryAlreadyPaid:
           isCurrentMonthSalaryAlreadyPaid ?? this.isCurrentMonthSalaryAlreadyPaid,
+      otherDeductions: otherDeductions ?? this.otherDeductions,
     );
   }
 
@@ -234,7 +240,8 @@ class EmployeeData {
           currentMonthOvertime == other.currentMonthOvertime &&
           hasLastGratification == other.hasLastGratification &&
           lastGratificationAmount == other.lastGratificationAmount &&
-          isCurrentMonthSalaryAlreadyPaid == other.isCurrentMonthSalaryAlreadyPaid;
+          isCurrentMonthSalaryAlreadyPaid == other.isCurrentMonthSalaryAlreadyPaid &&
+          otherDeductions == other.otherDeductions;
 
   @override
   int get hashCode => Object.hashAll([
@@ -264,5 +271,6 @@ class EmployeeData {
         hasLastGratification,
         lastGratificationAmount,
         isCurrentMonthSalaryAlreadyPaid,
+        otherDeductions,
       ]);
 }

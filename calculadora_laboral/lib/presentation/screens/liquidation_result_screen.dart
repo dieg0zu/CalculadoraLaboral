@@ -106,6 +106,20 @@ class LiquidationResultScreen extends StatelessWidget {
                       result.pensionDeduction,
                     ),
                   ],
+                  if (result.epsDeduction > 0) ...[
+                    if (result.pensionDeduction == 0) const Divider(color: Colors.white24, height: 24),
+                    _buildDeductionRow(
+                      'Deducción EPS',
+                      result.epsDeduction,
+                    ),
+                  ],
+                  if (result.otherDeductions > 0) ...[
+                    if (result.pensionDeduction == 0 && result.epsDeduction == 0) const Divider(color: Colors.white24, height: 24),
+                    _buildDeductionRow(
+                      'Otras Deducciones al cese',
+                      result.otherDeductions,
+                    ),
+                  ],
                   const Divider(color: Colors.white24, height: 24),
                   _buildDetailRow('Total Neto a Recibir', result.totalToPay, isBold: true),
                 ],
