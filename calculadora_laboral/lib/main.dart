@@ -6,7 +6,7 @@ import 'presentation/screens/net_salary_screen.dart';
 import 'presentation/screens/gratification_screen.dart';
 import 'presentation/screens/cts_screen.dart';
 import 'presentation/screens/liquidation_screen.dart';
-import 'presentation/screens/info_screen.dart';
+// import 'presentation/screens/info_screen.dart';
 
 void main() {
   runApp(
@@ -82,13 +82,15 @@ class _MainShellState extends State<MainShell> {
       screen: LiquidationScreen(),
       appBarTitle: 'Liquidación Total',
     ),
+    /*
     _TabItem(
       label: 'Info',
       icon: Icons.info_outline_rounded,
       activeIcon: Icons.info_rounded,
       screen: InfoScreen(),
-      appBarTitle: 'Parámetros Legales 2025',
+      appBarTitle: 'Parámetros Legales 2026',
     ),
+    */
   ];
 
   @override

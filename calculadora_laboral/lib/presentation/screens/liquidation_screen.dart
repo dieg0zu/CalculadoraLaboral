@@ -35,15 +35,7 @@ class _LiquidationScreenState extends ConsumerState<LiquidationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Calculadora de Liquidación',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 16),
+
           LiquidationInputsPanel(onCalculate: _onCalculate),
         ],
       ),

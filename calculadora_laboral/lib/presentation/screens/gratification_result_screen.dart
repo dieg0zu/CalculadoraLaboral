@@ -112,36 +112,6 @@ class GratificationResultScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // ── Nota legal ────────────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE4E7ED)),
-              ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.info_outline_rounded,
-                      size: 18, color: AppTheme.kTextSecondary),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Las gratificaciones están exoneradas de aportes al sistema '
-                      'pensionario (ONP/AFP) por Ley 29351, prorrogada indefinidamente.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.kTextSecondary,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
             // ── Botón Volver a calcular ─────────────────────────────
             SizedBox(
               width: double.infinity,

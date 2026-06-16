@@ -20,6 +20,6 @@ with open('lib/presentation/widgets/inputs/liquidation_inputs_panel.dart', 'w', 
 
 with open('lib/main.dart', 'r', encoding='utf-8') as f:
     content = f.read()
-content = content.replace("'🇵🇪 2025'", "'🇵🇪 2026'")
+content = content.replace("'🇵🇪 2026'", "'🇵🇪 2026'")
 with open('lib/main.dart', 'w', encoding='utf-8') as f:
     f.write(content)

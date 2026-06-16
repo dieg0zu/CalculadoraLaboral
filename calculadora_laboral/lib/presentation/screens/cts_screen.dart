@@ -47,15 +47,7 @@ class _CtsScreenState extends ConsumerState<CtsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Calculadora de CTS',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 16),
+
           const CtsInputsPanel(),
           const SizedBox(height: 16),
           SizedBox(

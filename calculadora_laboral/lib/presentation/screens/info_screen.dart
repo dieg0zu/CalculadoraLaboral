@@ -37,7 +37,7 @@ class InfoScreen extends StatelessWidget {
                 const Icon(Icons.gavel_rounded, color: Colors.white, size: 32),
                 const SizedBox(height: 12),
                 Text(
-                  'Parámetros Legales 2025',
+                  'Parámetros Legales 2026',
                   style: textTheme.titleLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -61,10 +61,10 @@ class InfoScreen extends StatelessWidget {
             items: [
               _InfoItem('RMV (Remuneración Mínima Vital)',
                   CurrencyFormatter.format(LegalParameters.kRMV),
-                  'DS 003-2025-TR'),
+                  'DS 003-2026-TR'),
               _InfoItem('UIT (Unidad Impositiva Tributaria)',
                   CurrencyFormatter.format(LegalParameters.kUIT),
-                  'RS 000-2025-EF'),
+                  'RS 000-2026-EF'),
               _InfoItem('Asignación Familiar',
                   CurrencyFormatter.format(LegalParameters.kFamilyAllowance),
                   '10% de la RMV — Ley 25129'),
