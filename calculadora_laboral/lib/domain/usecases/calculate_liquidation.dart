@@ -141,9 +141,11 @@ final class CalculateLiquidationUseCase {
     if (isMype) gratificacionTrunca /= 2;
 
     // CTS Trunca
-    final double baseCts = baseRemunerativa + (baseRemunerativa / 6.0) + promedioHorasExtraPasadas + bonusesAvg;
-    double ctsTrunca = (baseCts / 12.0) * tiempoCalculado;
-    if (isMype) ctsTrunca /= 2;
+    final double gratiParaCts = isMype ? (baseRemunerativa / 2.0) : baseRemunerativa;
+final double baseCts = baseRemunerativa + (gratiParaCts / 6.0) + promedioHorasExtraPasadas + bonusesAvg;
+
+double ctsTrunca = (baseCts / 12.0) * tiempoCalculado;
+if (isMype) ctsTrunca /= 2;
 
     // Vacaciones Truncas
     final double baseVacaciones = baseRemunerativa;

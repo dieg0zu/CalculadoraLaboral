@@ -204,7 +204,7 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                 ),
               ),
               const SizedBox(height: 20),
-            ],
+            ] else if (data.regime != null) ...[
 
             // ── Sueldo Bruto ──
             const Text('Sueldo Bruto Mensual (S/)', style: TextStyle(color: primaryBlue, fontSize: 14, fontWeight: FontWeight.w600)),
@@ -793,6 +793,7 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                 ),
               ),
             ),
+            ],
           ],
         ),
       ),

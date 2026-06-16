@@ -225,7 +225,7 @@ enum HealthInsurance {
         HealthInsurance.sis => 'SIS Microempresa',
         HealthInsurance.essalud => 'EsSalud Regular',
         HealthInsurance.eps => 'EPS',
-        HealthInsurance.both => 'Ambos',
+        HealthInsurance.both => 'Ambos (EsSalud + EPS)',
       };
 }
 
