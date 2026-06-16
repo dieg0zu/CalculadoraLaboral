@@ -2,15 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/inputs/cts_inputs_panel.dart';
 import '../providers/employee_data_provider.dart';
-import '../../core/constants/legal_parameters.dart';
 import 'cts_result_screen.dart';
 
 /// Tab 3 — Cálculo de CTS (Compensación por Tiempo de Servicios)
-class CtsScreen extends ConsumerWidget {
+class CtsScreen extends ConsumerStatefulWidget {
   const CtsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CtsScreen> createState() => _CtsScreenState();
+}
+
+class _CtsScreenState extends ConsumerState<CtsScreen> {
+  void _onCalculate() {
+    final data = ref.read(ctsDataProvider);
+
+    if (data.startDate == null ||
+        (data.isCurrentlyWorking == false && data.endDate == null) ||
+        data.regime == null ||
+        data.grossSalary <= 0 ||
+        data.isCurrentlyWorking == null ||
+        data.hasFamilyAllowance == null ||
+        data.hasLastGratification == null ||
+        (data.hasLastGratification == true && data.lastGratificationAmount <= 0) ||
+        data.bonusesMeetRegularity == null ||
+        (data.bonusesMeetRegularity == true && data.semesterTotalBonuses <= 0) ||
+        data.overtimeMeetRegularity == null ||
+        (data.overtimeMeetRegularity == true && data.semesterTotalOvertime <= 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, complete todos los campos')),
+      );
+      return;
+    }
+
+    // ── Todo OK → navegar ────────────────────────────────────────────
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const CtsResultScreen()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Column(
@@ -41,104 +72,7 @@ class CtsScreen extends ConsumerWidget {
               ),
               icon: const Icon(Icons.calculate_outlined, size: 20),
               label: const Text('Calcular Ahora', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              onPressed: () {
-                final data = ref.read(ctsDataProvider);
-
-                if (data.startDate == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa la fecha de inicio')),
-                  );
-                  return;
-                }
-                
-                if (data.isCurrentlyWorking == false && data.endDate == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa la fecha de cese')),
-                  );
-                  return;
-                }
-
-                if (data.regime == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, selecciona un régimen laboral')),
-                  );
-                  return;
-                }
-                
-                if (data.regime == CompanyRegime.micro || data.regime == CompanyRegime.intern) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Este régimen no aplica para CTS')),
-                  );
-                  return;
-                }
-
-                if (data.grossSalary <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa el sueldo bruto')),
-                  );
-                  return;
-                }
-
-                if (data.isCurrentlyWorking == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, indica si sigue trabajando')),
-                  );
-                  return;
-                }
-
-                if (data.hasFamilyAllowance == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, indica si tiene asignación familiar')),
-                  );
-                  return;
-                }
-
-                if (data.hasLastGratification == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, indica si recibiste gratificación')),
-                  );
-                  return;
-                }
-
-                if (data.hasLastGratification == true && data.lastGratificationAmount <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa un monto válido de gratificación')),
-                  );
-                  return;
-                }
-
-                if (data.bonusesMeetRegularity == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, indica la regularidad de los bonos')),
-                  );
-                  return;
-                }
-
-                if (data.bonusesMeetRegularity == true && data.semesterTotalBonuses <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa el monto total de bonos')),
-                  );
-                  return;
-                }
-
-                if (data.overtimeMeetRegularity == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, indica la regularidad de las horas extras')),
-                  );
-                  return;
-                }
-
-                if (data.overtimeMeetRegularity == true && data.semesterTotalOvertime <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa el monto total de horas extras')),
-                  );
-                  return;
-                }
-
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CtsResultScreen()),
-                );
-              },
+              onPressed: _onCalculate,
             ),
           ),
         ],

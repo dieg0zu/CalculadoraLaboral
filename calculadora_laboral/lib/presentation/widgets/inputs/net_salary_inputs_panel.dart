@@ -60,6 +60,9 @@ class _NetSalaryInputsPanelState extends ConsumerState<NetSalaryInputsPanel> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: lightBlueBg,
+                hintText: 'Ingrese su sueldo bruto', // Cambiado a petición del usuario
+                prefixText: 'S/ ',
+                prefixStyle: const TextStyle(color: textDark, fontSize: 16),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -70,7 +73,10 @@ class _NetSalaryInputsPanelState extends ConsumerState<NetSalaryInputsPanel> {
                   borderSide: const BorderSide(color: primaryBlue, width: 1.5),
                 ),
               ),
-              onChanged: (v) => notifier.updateGrossSalary(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
+              onChanged: (v) {
+                final cleaned = v.replaceAll('.', '').replaceAll(',', '.');
+                notifier.updateGrossSalary(double.tryParse(cleaned) ?? 0.0);
+              },
             ),
             const SizedBox(height: 20),
 
@@ -213,39 +219,54 @@ class _NetSalaryInputsPanelState extends ConsumerState<NetSalaryInputsPanel> {
             ),
             const SizedBox(height: 24),
 
-            // 4. EPS (Caja Azul Clara con Switch)
+            // 4. EPS (Radios Sí/No en lugar de Switch)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
                 color: lightBlueBg,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const Text('¿Está afiliado a EPS?', style: TextStyle(fontSize: 14, color: textDark)),
+                  const Text('Empresa Prestadora de Salud', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                  const SizedBox(height: 8),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('¿Afiliado a EPS?', style: TextStyle(fontSize: 14, color: textDark)),
-                          Text('Empresa Prestadora de Salud', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                          Radio<HealthInsurance>(
+                            value: HealthInsurance.eps,
+                            groupValue: data.healthInsurance,
+                            activeColor: primaryBlue,
+                            onChanged: (val) {
+                              if (val != null) {
+                                notifier.updateHealthInsurance(val);
+                              }
+                            },
+                          ),
+                          const Text('Sí', style: TextStyle(color: textDark)),
                         ],
                       ),
-                      Switch(
-                        value: data.healthInsurance == HealthInsurance.eps,
-                        activeColor: Colors.white,
-                        activeTrackColor: primaryBlue,
-                        inactiveThumbColor: Colors.white,
-                        inactiveTrackColor: const Color(0xFFCBD5E1),
-                        onChanged: (val) {
-                          if (val) {
-                            notifier.updateHealthInsurance(HealthInsurance.eps);
-                          } else {
-                            notifier.updateHealthInsurance(HealthInsurance.essalud);
-                            notifier.updateEpsCost(0);
-                          }
-                        },
+                      const SizedBox(width: 24),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Radio<HealthInsurance>(
+                            value: HealthInsurance.essalud,
+                            groupValue: data.healthInsurance,
+                            activeColor: primaryBlue,
+                            onChanged: (val) {
+                              if (val != null) {
+                                notifier.updateHealthInsurance(val);
+                                notifier.updateEpsCost(0); // Reset cost if 'No' is selected
+                              }
+                            },
+                          ),
+                          const Text('No', style: TextStyle(color: textDark)),
+                        ],
                       ),
                     ],
                   ),
@@ -254,23 +275,28 @@ class _NetSalaryInputsPanelState extends ConsumerState<NetSalaryInputsPanel> {
                     TextFormField(
                       initialValue: data.epsCost == 0 ? '' : CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2).formatDouble(data.epsCost),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
+                      inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'-')), CurrencyTextInputFormatter.currency(locale: 'es', symbol: '', decimalDigits: 2)],
                       style: const TextStyle(fontSize: 14, color: textDark),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Costo de plan (S/)',
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        hintText: 'Ingrese el costo de plan (S/)',
+                        prefixText: 'S/ ',
+                        prefixStyle: const TextStyle(color: textDark, fontSize: 14),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: borderColor),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: primaryBlue),
                         ),
                       ),
-                      onChanged: (v) => notifier.updateEpsCost(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
+                      onChanged: (v) {
+                        final cleaned = v.replaceAll('.', '').replaceAll(',', '.');
+                        notifier.updateEpsCost(double.tryParse(cleaned) ?? 0.0);
+                      },
                     ),
                   ]
                 ],

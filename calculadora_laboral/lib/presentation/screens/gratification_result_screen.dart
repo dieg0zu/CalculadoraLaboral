@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/payroll_providers.dart';
 import '../providers/employee_data_provider.dart';
-import '../widgets/results/section_card.dart';
-import '../widgets/results/result_row_widget.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/constants/legal_parameters.dart';
 
 class GratificationResultScreen extends ConsumerWidget {
   const GratificationResultScreen({super.key});

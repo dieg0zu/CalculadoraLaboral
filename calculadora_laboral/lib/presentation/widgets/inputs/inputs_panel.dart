@@ -154,8 +154,8 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
                     'RMV mínima: S/. ${LegalParameters.kRMV.toStringAsFixed(2)}',
               ),
               onChanged: (v) {
-                final parsed = double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0;
-                notifier.updateGrossSalary(parsed);
+                final cleaned = v.replaceAll('.', '').replaceAll(',', '.');
+                notifier.updateGrossSalary(double.tryParse(cleaned) ?? 0.0);
               },
             ),
             const SizedBox(height: 14),
@@ -197,8 +197,8 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
                     helperText: 'Promedio mensual o monto fijo',
                   ),
                   onChanged: (v) {
-                    final parsed = double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0;
-                    notifier.updateBonuses(parsed);
+                    final cleaned = v.replaceAll('.', '').replaceAll(',', '.');
+                    notifier.updateBonuses(double.tryParse(cleaned) ?? 0.0);
                   },
                 ),
 
@@ -417,8 +417,8 @@ class _InputsPanelState extends ConsumerState<InputsPanel> {
                     prefixText: 'S/. ',
                   ),
                   onChanged: (v) {
-                    final parsed = double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0;
-                    notifier.updateEpsCost(parsed);
+                    final cleaned = v.replaceAll('.', '').replaceAll(',', '.');
+                    notifier.updateEpsCost(double.tryParse(cleaned) ?? 0.0);
                   },
                 ),
               ],

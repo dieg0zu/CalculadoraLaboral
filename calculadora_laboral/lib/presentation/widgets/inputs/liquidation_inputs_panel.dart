@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'date_validation_formatter.dart';
 
 import '../../../core/constants/legal_parameters.dart';
 import '../../providers/liquidation_data_provider.dart';
@@ -22,10 +20,6 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
   late TextEditingController _epsCostController;
-
-  final _startDateMaskFormatter = DateTextFormatter();
-  
-  final _endDateMaskFormatter = DateTextFormatter();
 
   DateTime? _startDate;
   DateTime? _endDate;
@@ -45,16 +39,24 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
     super.dispose();
   }
 
+  /// Selector de fecha de inicio — solo calendario, sin texto manual.
   Future<void> _selectStartDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _startDate ?? DateTime(2026, 1, 1),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2030),
+      initialDate: _startDate ?? DateTime(DateTime.now().year - 1, 1, 1),
+      firstDate: DateTime(1990),
+      lastDate: DateTime.now(),
       helpText: 'Seleccionar Fecha de Inicio',
       locale: const Locale('es', 'ES'),
     );
     if (picked != null) {
+      // Si ya hay fecha de cese y la nueva fecha de inicio es posterior, resetear cese.
+      if (_endDate != null && picked.isAfter(_endDate!)) {
+        setState(() {
+          _endDate = null;
+          _endDateController.text = '';
+        });
+      }
       setState(() {
         _startDate = picked;
         _startDateController.text = DateFormat('dd/MM/yyyy').format(picked);
@@ -62,12 +64,19 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
     }
   }
 
+  /// Selector de fecha de cese — firstDate queda anclado a la fecha de inicio.
   Future<void> _selectEndDate() async {
+    if (_startDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Primero selecciona la fecha de inicio.')),
+      );
+      return;
+    }
     final picked = await showDatePicker(
       context: context,
-      initialDate: _endDate ?? DateTime.now(),
-      firstDate: _startDate ?? DateTime(2000),
-      lastDate: DateTime(2030),
+      initialDate: _endDate ?? _startDate!,
+      firstDate: _startDate!,         // ← Garantiza: cese ≥ inicio
+      lastDate: DateTime.now().add(const Duration(days: 365)),
       helpText: 'Seleccionar Fecha de Cese',
       locale: const Locale('es', 'ES'),
     );
@@ -78,151 +87,34 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
       });
     }
   }
-  
-  void _parseManualDate(String val, bool isStart) {
-    try {
-      if (val.length == 10) {
-        // try parsing
-        final parts = val.split('/');
-        if (parts.length == 3) {
-          int d = int.parse(parts[0]);
-          int m = int.parse(parts[1]);
-          int y = int.parse(parts[2]);
-          if (y < 100) y += 2000;
-          final date = DateTime(y, m, d);
-          setState(() {
-            if (isStart) _startDate = date;
-            else _endDate = date;
-          });
-        }
-      }
-    } catch (_) {}
-  }
 
   void _onCalculatePressed() {
-    if (_startDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa la fecha de inicio.')),
-      );
-      return;
-    }
-    
-    if (_endDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa la fecha de cese.')),
-      );
-      return;
-    }
-    
-    if (_endDate!.year < _startDate!.year) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El año de la fecha de fin no puede ser anterior al año de inicio.')),
-      );
-      return;
-    }
-    if (_endDate!.isBefore(_startDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La fecha de cese no puede ser anterior a la fecha de inicio.')),
-      );
-      return;
-    }
-    
     final data = ref.read(liquidationDataProvider);
-    
-    if (data.regime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, selecciona un régimen laboral.')),
-      );
-      return;
-    }
-    
-    if (data.grossSalary <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa un sueldo bruto válido.')),
-      );
-      return;
-    }
-    
-    if (data.hasFamilyAllowance == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, indica si tienes hijos (Asignación Familiar).')),
-      );
-      return;
-    }
-    
 
-
-
-    if (data.hasTakenVacations == null) {
+    if (_startDate == null ||
+        _endDate == null ||
+        _endDate!.isBefore(_startDate!) ||
+        data.regime == null ||
+        data.grossSalary <= 0 ||
+        data.hasFamilyAllowance == null ||
+        data.hasTakenVacations == null ||
+        data.bonusesMeetRegularity == null ||
+        (data.bonusesMeetRegularity == true && data.semesterTotalBonuses <= 0) ||
+        data.overtimeMeetRegularity == null ||
+        (data.overtimeMeetRegularity == true && data.semesterTotalOvertime <= 0) ||
+        _hasCurrentMonthOvertime == null ||
+        (_hasCurrentMonthOvertime == true && data.currentMonthOvertime <= 0) ||
+        data.healthInsurance == null ||
+        (data.healthInsurance == HealthInsurance.eps && data.epsCost <= 0) ||
+        data.pensionSystem == null ||
+        (data.pensionSystem == PensionSystem.afp && data.afpType == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, indica si ha gozado de días de descanso vacacional.')),
+        const SnackBar(content: Text('Por favor, complete todos los campos')),
       );
       return;
     }
 
-    if (data.bonusesMeetRegularity == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, indica si recibiste bonos/comisiones.')),
-      );
-      return;
-    }
-    
-    if (data.bonusesMeetRegularity == true && data.semesterTotalBonuses <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa el monto total de bonos/comisiones.')),
-      );
-      return;
-    }
-    
-    if (data.overtimeMeetRegularity == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, indica si hiciste horas extras.')),
-      );
-      return;
-    }
-
-    if (data.overtimeMeetRegularity == true && data.semesterTotalOvertime <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa el monto total de horas extras.')),
-      );
-      return;
-    }
-
-    if (_hasCurrentMonthOvertime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, indica si hiciste horas extras en el mes de cese.')),
-      );
-      return;
-    }
-    
-    if (_hasCurrentMonthOvertime == true && data.currentMonthOvertime <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa el monto de horas extras del mes de cese.')),
-      );
-      return;
-    }
-
-
-    if (data.healthInsurance == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, selecciona un seguro de salud.')),
-      );
-      return;
-    }
-
-    if (data.pensionSystem == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, selecciona un sistema de pensión.')),
-      );
-      return;
-    }
-    if (data.pensionSystem == PensionSystem.afp && data.afpType == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, selecciona una AFP.')),
-      );
-      return;
-    }
-
+    // ── Todo OK → ejecutar cálculo ───────────────────────────────────
     widget.onCalculate(_startDate!, _endDate!);
   }
 
@@ -288,6 +180,32 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
             ),
             const SizedBox(height: 20),
 
+            if (data.regime == CompanyRegime.micro || data.regime == CompanyRegime.intern) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFF87171)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        data.regime == CompanyRegime.micro 
+                          ? 'Por ley, los trabajadores de Microempresa en su liquidación solo reciben Vacaciones truncas (no aplica CTS ni Gratificación).'
+                          : 'Por ley, los Practicantes en su liquidación solo reciben la media subvención proporcional (no aplica CTS ni Gratificación).',
+                        style: const TextStyle(color: Color(0xFF991B1B), fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+
             // ── Sueldo Bruto ──
             const Text('Sueldo Bruto Mensual (S/)', style: TextStyle(color: primaryBlue, fontSize: 14, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
@@ -306,7 +224,10 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: borderColor)),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
               ),
-              onChanged: (v) => notifier.updateGrossSalary(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
+              onChanged: (v) {
+                final cleaned = v.replaceAll('.', '').replaceAll(',', '.');
+                notifier.updateGrossSalary(double.tryParse(cleaned) ?? 0.0);
+              },
             ),
             const SizedBox(height: 12),
 
@@ -352,13 +273,12 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
             const SizedBox(height: 8),
             TextFormField(
               controller: _startDateController,
-              keyboardType: TextInputType.datetime,
-              inputFormatters: [_startDateMaskFormatter],
+              readOnly: true,   // ← Solo calendario, sin tipeo libre
               style: const TextStyle(fontSize: 16, color: textDark),
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white,
-                hintText: 'DD/MM/YYYY',
+                hintText: 'Toca el ícono para seleccionar',
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.calendar_today_rounded, color: Color(0xFF64748B), size: 20),
                   onPressed: _selectStartDate,
@@ -367,7 +287,7 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
               ),
-              onChanged: (val) => _parseManualDate(val, true),
+              onTap: _selectStartDate,
             ),
             const SizedBox(height: 20),
 
@@ -375,13 +295,13 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
             const SizedBox(height: 8),
             TextFormField(
               controller: _endDateController,
-              keyboardType: TextInputType.datetime,
-              inputFormatters: [_endDateMaskFormatter],
+              readOnly: true,   // ← Solo calendario, sin tipeo libre
               style: const TextStyle(fontSize: 16, color: textDark),
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white,
-                hintText: 'DD/MM/YYYY',
+                hintText: 'Toca el ícono para seleccionar',
+                helperText: _startDate == null ? 'Selecciona primero la fecha de inicio' : null,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.calendar_today_rounded, color: Color(0xFF64748B), size: 20),
                   onPressed: _selectEndDate,
@@ -390,7 +310,7 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
               ),
-              onChanged: (val) => _parseManualDate(val, false),
+              onTap: _selectEndDate,
             ),
             const SizedBox(height: 20),
 
@@ -480,7 +400,10 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
                 ),
-                onChanged: (v) => notifier.updateSemesterTotalBonuses(double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0),
+                onChanged: (v) {
+                  final cleaned = v.replaceAll('.', '').replaceAll(',', '.');
+                  notifier.updateSemesterTotalBonuses(double.tryParse(cleaned) ?? 0.0);
+                },
               ),
               const SizedBox(height: 16),
             ],
@@ -557,9 +480,10 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                     borderSide: const BorderSide(color: primaryBlue, width: 1.5),
                   ),
                 ),
-                onChanged: (v) => notifier.updateSemesterTotalOvertime(
-                  double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0,
-                ),
+                onChanged: (v) {
+                  final cleaned = v.replaceAll('.', '').replaceAll(',', '.');
+                  notifier.updateSemesterTotalOvertime(double.tryParse(cleaned) ?? 0.0);
+                },
               ),
               const SizedBox(height: 16),
             ],
@@ -633,9 +557,10 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                     borderSide: const BorderSide(color: primaryBlue, width: 1.5),
                   ),
                 ),
-                onChanged: (v) => notifier.updateCurrentMonthOvertime(
-                  double.tryParse(v.replaceAll('.', '').replaceAll(',', '.')) ?? 0,
-                ),
+                onChanged: (v) {
+                  final cleaned = v.replaceAll('.', '').replaceAll(',', '.');
+                  notifier.updateCurrentMonthOvertime(double.tryParse(cleaned) ?? 0.0);
+                },
               ),
             ],
             const SizedBox(height: 24),
@@ -820,6 +745,17 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
               TextFormField(
                 keyboardType: TextInputType.number,
                 initialValue: data.takenVacationDays == 0 ? '' : data.takenVacationDays.toString(),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,  // ← Sin negativos, sin decimales
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) return null;
+                  final days = int.tryParse(value);
+                  if (days == null || days < 0) return 'Ingresa un número de días válido (≥ 0)';
+                  // Máximo razonable: 30 días por año × 40 años
+                  if (days > 1200) return 'El número de días parece excesivo';
+                  return null;
+                },
                 decoration: InputDecoration(
                   hintText: 'Ej. 15',
                   hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
@@ -828,8 +764,13 @@ class _LiquidationInputsPanelState extends ConsumerState<LiquidationInputsPanel>
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
+                  errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red)),
+                  focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
                 ),
-                onChanged: (val) => notifier.updateTakenVacationDays(int.tryParse(val) ?? 0),
+                onChanged: (val) {
+                  final parsed = int.tryParse(val);
+                  notifier.updateTakenVacationDays(parsed ?? 0);
+                },
               ),
             ],
             const SizedBox(height: 32),

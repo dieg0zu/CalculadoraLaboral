@@ -130,12 +130,18 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
   Future<void> _selectStartDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _startDate ?? DateTime(2026, 5, 1),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2030),
+      initialDate: _startDate ?? DateTime(DateTime.now().year - 1, 5, 1),
+      firstDate: DateTime(1990),
+      lastDate: DateTime.now(),
       helpText: 'Seleccionar Fecha de Inicio',
     );
     if (picked != null) {
+      if (_endDate != null && picked.isAfter(_endDate!)) {
+        setState(() {
+          _endDate = null;
+          _endDateController.text = '';
+        });
+      }
       setState(() {
         _startDate = picked;
         _startDateController.text = DateFormat('dd/MM/yyyy').format(picked);
@@ -145,11 +151,17 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
   }
 
   Future<void> _selectEndDate() async {
+    if (_startDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Primero selecciona la fecha de inicio.')),
+      );
+      return;
+    }
     final picked = await showDatePicker(
       context: context,
-      initialDate: _endDate ?? DateTime(2026, 10, 31),
-      firstDate: _startDate ?? DateTime(2000),
-      lastDate: DateTime(2030),
+      initialDate: _endDate ?? _startDate!,
+      firstDate: _startDate!,          // ← Fin siempre ≥ inicio
+      lastDate: DateTime.now().add(const Duration(days: 365)),
       helpText: 'Seleccionar Fecha de Fin',
     );
     if (picked != null) {
@@ -272,13 +284,12 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _startDateController,
-                keyboardType: TextInputType.datetime,
-                inputFormatters: [_dateMaskFormatter],
+                readOnly: true,   // ← Solo calendario
                 style: const TextStyle(fontSize: 16, color: textDark),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
-                  hintText: 'DD/MM/YYYY',
+                  hintText: 'Toca para seleccionar',
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.calendar_today_rounded, color: Color(0xFF64748B), size: 20),
                     onPressed: _selectStartDate,
@@ -287,7 +298,7 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
                 ),
-                onChanged: (val) => _parseManualDate(val, true),
+                onTap: _selectStartDate,
               ),
               const SizedBox(height: 20),
 
@@ -336,13 +347,13 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _endDateController,
-                  keyboardType: TextInputType.datetime,
-                  inputFormatters: [_dateMaskFormatter],
+                  readOnly: true,   // ← Solo calendario
                   style: const TextStyle(fontSize: 16, color: textDark),
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: 'DD/MM/YYYY',
+                    hintText: 'Toca para seleccionar',
+                    helperText: _startDate == null ? 'Selecciona primero la fecha de inicio' : null,
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.calendar_today_rounded, color: Color(0xFF64748B), size: 20),
                       onPressed: _selectEndDate,
@@ -351,7 +362,7 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryBlue, width: 1.5)),
                   ),
-                  onChanged: (val) => _parseManualDate(val, false),
+                  onTap: _selectEndDate,
                 ),
               ],
               const SizedBox(height: 20),

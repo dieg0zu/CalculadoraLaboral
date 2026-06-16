@@ -6,14 +6,37 @@ import '../widgets/inputs/net_salary_inputs_panel.dart';
 import 'net_salary_result_screen.dart';
 
 /// Tab 1 — Sueldo Neto Mensual.
-///
-/// Formulario de datos para el cálculo. Al darle a calcular, abre una nueva ventana
-/// con el resultado final.
-class NetSalaryScreen extends ConsumerWidget {
+class NetSalaryScreen extends ConsumerStatefulWidget {
   const NetSalaryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NetSalaryScreen> createState() => _NetSalaryScreenState();
+}
+
+class _NetSalaryScreenState extends ConsumerState<NetSalaryScreen> {
+  void _onCalculate() {
+    final data = ref.read(netSalaryDataProvider);
+
+    if (data.grossSalary <= 0 ||
+        data.hasFamilyAllowance == null ||
+        data.pensionSystem == null ||
+        (data.pensionSystem == PensionSystem.afp && data.afpType == null) ||
+        data.healthInsurance == null ||
+        (data.healthInsurance == HealthInsurance.eps && data.epsCost <= 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, complete todos los campos')),
+      );
+      return;
+    }
+
+    // ── Todo OK → navegar ────────────────────────────────────────────
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const NetSalaryResultScreen()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Column(
@@ -45,41 +68,7 @@ class NetSalaryScreen extends ConsumerWidget {
               ),
               icon: const Icon(Icons.calculate_outlined, size: 20),
               label: const Text('Calcular Ahora', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              onPressed: () {
-                final data = ref.read(netSalaryDataProvider);
-                // Validación de campos obligatorios
-                if (data.grossSalary <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, ingresa el sueldo bruto')),
-                  );
-                  return;
-                }
-                
-                if (data.hasFamilyAllowance == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, selecciona si tienes hijos')),
-                  );
-                  return;
-                }
-                
-                if (data.pensionSystem == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, selecciona un sistema pensionario')),
-                  );
-                  return;
-                }
-                
-                if (data.pensionSystem == PensionSystem.afp && data.afpType == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, selecciona tu entidad AFP')),
-                  );
-                  return;
-                }
-
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const NetSalaryResultScreen()),
-                );
-              },
+              onPressed: _onCalculate,
             ),
           ),
         ],
