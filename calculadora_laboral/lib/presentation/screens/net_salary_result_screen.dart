@@ -19,6 +19,8 @@ class NetSalaryResultScreen extends ConsumerWidget {
     final result = ref.watch(payrollResultProvider);
     final textTheme = Theme.of(context).textTheme;
 
+    const bool showDetails = false;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Resultado del Cálculo'),
@@ -94,7 +96,8 @@ class NetSalaryResultScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // ── Resumen compacto (Tarjeta blanca) ───────────────────
+            if (showDetails) ...[
+              // ── Resumen compacto (Tarjeta blanca) ───────────────────
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -200,6 +203,7 @@ class NetSalaryResultScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 32),
+            ],
 
             // ── Botón Volver a calcular ─────────────────────────────
             SizedBox(

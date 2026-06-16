@@ -11,6 +11,8 @@ class LiquidationResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    const bool showDetails = false;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
@@ -76,7 +78,8 @@ class LiquidationResultScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
 
-              // ── Desglose de la Liquidación ──
+              if (showDetails) ...[
+                // ── Desglose de la Liquidación ──
               const Text(
                 'Desglose de la Liquidación',
                 style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
@@ -143,6 +146,7 @@ class LiquidationResultScreen extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 32),
+              ],
 
               // ── Botón Volver ──
               SizedBox(
