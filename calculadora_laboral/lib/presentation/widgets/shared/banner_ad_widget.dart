@@ -23,7 +23,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
       adUnitId:
           'ca-app-pub-3940256099942544/6300978111', // ID de prueba oficial
       request: const AdRequest(),
-      size: AdSize.largeBanner,
+      size: AdSize.mediumRectangle,
       listener: BannerAdListener(
         onAdLoaded: (ad) {
           // El if (mounted) es VITAL para evitar tu error de la pantalla roja
@@ -61,6 +61,6 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
     }
 
     // Mientras carga, o si falla, devolvemos un espacio vacío para no romper tu UI
-    return const SizedBox(height: 50);
+    return const SizedBox(height: 300);
   }
 }
