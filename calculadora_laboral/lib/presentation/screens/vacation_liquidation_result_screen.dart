@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/theme/app_theme.dart';
+import '../widgets/shared/banner_ad_widget.dart';
 
 class VacationLiquidationResultScreen extends ConsumerWidget {
   const VacationLiquidationResultScreen({super.key});
@@ -127,6 +128,8 @@ class VacationLiquidationResultScreen extends ConsumerWidget {
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
+            const SizedBox(height: 24),
+            const BannerAdWidget(),
             const SizedBox(height: 16),
           ],
         ),

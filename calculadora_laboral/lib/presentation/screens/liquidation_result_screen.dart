@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/liquidation_result.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/theme/app_theme.dart';
+import '../widgets/shared/banner_ad_widget.dart';
 
 class LiquidationResultScreen extends StatelessWidget {
   final LiquidationResult result;
@@ -14,69 +16,60 @@ class LiquidationResultScreen extends StatelessWidget {
     const bool showDetails = false;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
-        title: const Text('Resultado de Liquidación', style: TextStyle(fontWeight: FontWeight.w700)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        title: const Text('Resultado del Cálculo'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Tarjeta Principal (Total Neto) ──
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Tarjeta Principal (Total Neto) ──
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF007AFF), Color(0xFF0056B3)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.kBlue.withValues(alpha: 0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'TOTAL NETO A RECIBIR',
-                      style: textTheme.titleSmall?.copyWith(
-                        letterSpacing: 2.0,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white70,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      CurrencyFormatter.format(result.totalToPay),
-                      style: textTheme.headlineLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 38,
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
-              const SizedBox(height: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+              child: Column(
+                children: [
+                  const Text(
+                    'TOTAL NETO A RECIBIR',
+                    style: TextStyle(
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    CurrencyFormatter.format(result.totalToPay),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 34,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
 
               if (showDetails) ...[
                 // ── Desglose de la Liquidación ──
@@ -155,21 +148,16 @@ class LiquidationResultScreen extends StatelessWidget {
                   icon: const Icon(Icons.refresh_rounded, size: 22),
                   label: const Text('Volver a calcular'),
                   onPressed: () => Navigator.of(context).pop(),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.white.withValues(alpha: 0.1),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
                 ),
               ),
+              const SizedBox(height: 24),
+              const BannerAdWidget(),
               const SizedBox(height: 24),
             ],
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
   Widget _buildDetailCard({
     required String title,
@@ -181,11 +169,9 @@ class LiquidationResultScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isInformative ? Colors.blue.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.05),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isInformative ? Colors.blue.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: AppTheme.kBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,16 +183,16 @@ class LiquidationResultScreen extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: TextStyle(
-                    color: isInformative ? Colors.white70 : Colors.white,
-                    fontSize: 18,
+                  style: const TextStyle(
+                    color: AppTheme.kTextPrimary,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           ...children,
         ],
       ),
@@ -228,11 +214,9 @@ class LiquidationResultScreen extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: isInformative
-                    ? Colors.white60
-                    : (isBold ? Colors.white : Colors.white70),
-                fontSize: isBold ? 16 : 15,
-                fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
+                color: isBold ? AppTheme.kTextPrimary : AppTheme.kTextSecondary,
+                fontSize: isBold ? 14 : 13,
+                fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ),
@@ -240,10 +224,10 @@ class LiquidationResultScreen extends StatelessWidget {
             CurrencyFormatter.format(value),
             style: TextStyle(
               color: isInformative
-                  ? Colors.blueAccent.shade100
-                  : (isBold ? Colors.white : Colors.white),
-              fontSize: isBold ? 16 : 15,
-              fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+                  ? Colors.blueAccent
+                  : (isBold ? AppTheme.kTextPrimary : const Color(0xFF1A1A2E)),
+              fontSize: isBold ? 16 : 14,
+              fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
             ),
           ),
         ],
@@ -263,16 +247,16 @@ class LiquidationResultScreen extends StatelessWidget {
             child: Text(
               label,
               style: const TextStyle(
-                color: Color(0xFFFBBF24), // amber-400
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
+                color: Color(0xFFD97706),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
           Text(
             '− ${CurrencyFormatter.format(value)}',
             style: const TextStyle(
-              color: Color(0xFFFBBF24),
+              color: Color(0xFFD97706),
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),

@@ -41,6 +41,7 @@ dependencies:
     sdk: flutter
   mask_text_input_formatter: ^2.9.0
   currency_text_input_formatter: ^2.3.0
+  google_mobile_ads: ^9.0.0
 
 dev_dependencies:
   flutter_test:

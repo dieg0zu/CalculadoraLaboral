@@ -8,7 +8,11 @@ import 'presentation/screens/cts_screen.dart';
 import 'presentation/screens/liquidation_screen.dart';
 // import 'presentation/screens/info_screen.dart';
 
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize();
   runApp(
     // ProviderScope es el contenedor raíz de Riverpod
     const ProviderScope(child: CalculadoraLaboralApp()),

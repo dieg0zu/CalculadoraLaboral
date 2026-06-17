@@ -6,6 +6,7 @@ import '../widgets/results/section_card.dart';
 import '../widgets/results/result_row_widget.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/theme/app_theme.dart';
+import '../widgets/shared/banner_ad_widget.dart';
 import '../../core/constants/legal_parameters.dart';
 
 /// Pantalla que muestra ÚNICAMENTE el resultado del cálculo del Sueldo Neto.
@@ -214,6 +215,8 @@ class NetSalaryResultScreen extends ConsumerWidget {
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
+            const SizedBox(height: 24),
+            const BannerAdWidget(),
             const SizedBox(height: 16),
           ],
         ),

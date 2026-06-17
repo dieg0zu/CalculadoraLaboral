@@ -4,6 +4,7 @@ import '../providers/payroll_providers.dart';
 import '../providers/employee_data_provider.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/theme/app_theme.dart';
+import '../widgets/shared/banner_ad_widget.dart';
 
 class GratificationResultScreen extends ConsumerWidget {
   const GratificationResultScreen({super.key});
@@ -121,6 +122,8 @@ class GratificationResultScreen extends ConsumerWidget {
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
+            const SizedBox(height: 24),
+            const BannerAdWidget(),
             const SizedBox(height: 16),
           ],
         ),

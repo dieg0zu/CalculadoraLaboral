@@ -404,7 +404,9 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
               // 6. ÚLTIMA GRATIFICACIÓN
               const Text('¿De cuánto fue su última gratificación?', style: TextStyle(fontSize: 14, color: textDark)),
               const SizedBox(height: 8),
-              Row(
+              Wrap(
+                spacing: 24,
+                runSpacing: 8,
                 children: [
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -418,7 +420,6 @@ class _CtsInputsPanelState extends ConsumerState<CtsInputsPanel> {
                       const Text('Ingresar monto', style: TextStyle(color: textDark)),
                     ],
                   ),
-                  const SizedBox(width: 24),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
